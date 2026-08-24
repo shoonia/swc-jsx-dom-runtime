@@ -20,11 +20,12 @@ fn jsx_transformer_fixture(input: PathBuf) {
 
     test_fixture(
         syntax(),
-        &|_| visit_mut_pass(JsxTransformer),
+        &|_| visit_mut_pass(JsxTransformer::new()),
         &input,
         &output,
         FixtureTestConfig {
             allow_error: true,
+            module: Some(true),
             ..Default::default()
         },
     );

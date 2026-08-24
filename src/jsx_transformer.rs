@@ -1,8 +1,7 @@
-use swc_core::common::util::take::Take;
-use swc_core::common::DUMMY_SP;
+use crate::import_manager::ImportManager;
+use swc_core::common::{util::take::Take, Mark, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::VisitMut;
-use swc_core::ecma::visit::VisitMutWith;
+use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 fn null_expr() -> Expr {
     Expr::Lit(Lit::Null(Null::dummy()))
@@ -62,9 +61,24 @@ fn transform_fragment(fragment: &JSXFragment) -> Expr {
     }
 }
 
-pub struct JsxTransformer;
+pub struct JsxTransformer {
+    pub imports: ImportManager,
+}
+
+impl JsxTransformer {
+    pub fn new() -> Self {
+        Self {
+            imports: ImportManager::new(SyntaxContext::empty().apply_mark(Mark::new())),
+        }
+    }
+}
 
 impl VisitMut for JsxTransformer {
+    fn visit_mut_module(&mut self, node: &mut Module) {
+        node.visit_mut_children_with(self);
+        self.imports.inject_into_module(node);
+    }
+
     fn visit_mut_expr(&mut self, node: &mut Expr) {
         node.visit_mut_children_with(self);
 
