@@ -10,6 +10,13 @@ fn null_expr() -> Expr {
     Expr::Lit(Lit::Null(Null::dummy()))
 }
 
+fn bool_expr(value: bool) -> Expr {
+    Expr::Lit(Lit::Bool(Bool {
+        span: DUMMY_SP,
+        value,
+    }))
+}
+
 fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     Expr::Array(ArrayLit {
         span: DUMMY_SP,
@@ -76,9 +83,16 @@ fn convert_jsx_member_expr(jsx_memeber: JSXMemberExpr) -> Expr {
     })
 }
 
-fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> Expr {
+fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> String {
     let name_str: String = format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name);
-    str_expr(name_str.into())
+    name_str
+}
+
+fn expr_container(container: &JSXExprContainer) -> Expr {
+    match &container.expr {
+        JSXExpr::JSXEmptyExpr(_) => null_expr(),
+        JSXExpr::Expr(expr) => expr.as_ref().clone(),
+    }
 }
 
 fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
@@ -103,10 +117,9 @@ fn build_children(
     children
         .iter()
         .filter_map(|child| match child {
-            JSXElementChild::JSXExprContainer(container) => match &container.expr {
-                JSXExpr::JSXEmptyExpr(_) => None,
-                JSXExpr::Expr(expr) => Some(Some(prop_expr(expr.as_ref().clone()))),
-            },
+            JSXElementChild::JSXExprContainer(container) => {
+                Some(Some(prop_expr(expr_container(container))))
+            }
             JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
                 spread: Some(spread.span),
                 expr: spread.expr.clone(),
@@ -118,6 +131,43 @@ fn build_children(
             JSXElementChild::JSXFragment(fragment) => {
                 Some(Some(prop_expr(transform_fragment(fragment, imports))))
             }
+        })
+        .collect()
+}
+
+fn build_props(
+    attributes: &Vec<JSXAttrOrSpread>,
+    imports: &mut ImportManager,
+) -> Vec<PropOrSpread> {
+    attributes
+        .iter()
+        .filter_map(|attr| match attr {
+            JSXAttrOrSpread::JSXAttr(attr) => {
+                let key = match &attr.name {
+                    JSXAttrName::Ident(ident) => ident.sym.clone(),
+                    JSXAttrName::JSXNamespacedName(namespaced) => {
+                        convert_jsx_namespaced_name(namespaced.clone()).into()
+                    }
+                };
+
+                let value = match &attr.value {
+                    Some(value) => match value {
+                        JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
+                        JSXAttrValue::JSXExprContainer(container) => expr_container(container),
+                        JSXAttrValue::JSXElement(element) => transform_element(element, imports),
+                        JSXAttrValue::JSXFragment(fragment) => {
+                            transform_fragment(fragment, imports)
+                        }
+                    },
+                    None => bool_expr(true),
+                };
+
+                Some(key_value_prop(&key, value))
+            }
+            JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
+                dot3_token: spread.dot3_token,
+                expr: spread.expr.clone(),
+            })),
         })
         .collect()
 }
@@ -134,11 +184,11 @@ fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Ex
 
 fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
     let children = build_children(&element.children, imports);
-    let mut props = vec![];
 
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
+                let mut props = build_props(&element.opening.attrs, imports);
                 if !children.is_empty() {
                     props.push(key_value_prop("children", children_expr(children)));
                 }
@@ -161,6 +211,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             }
         }
         JSXElementName::JSXMemberExpr(jsx_memeber) => {
+            let mut props = build_props(&element.opening.attrs, imports);
             if !children.is_empty() {
                 props.push(key_value_prop("children", children_expr(children)));
             }
@@ -172,8 +223,10 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
         }
         JSXElementName::JSXNamespacedName(jsx_memeber) => {
             let mut args = vec![
-                prop_expr(convert_jsx_namespaced_name(jsx_memeber.clone())),
-                prop_expr(object_expr(props)),
+                prop_expr(str_expr(
+                    convert_jsx_namespaced_name(jsx_memeber.clone()).into(),
+                )),
+                prop_expr(object_expr(vec![])),
             ];
 
             if !children.is_empty() {
