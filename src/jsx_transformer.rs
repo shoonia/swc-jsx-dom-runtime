@@ -58,16 +58,18 @@ fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
 }
 
 fn key_value_prop(key: &str, value: Expr) -> PropOrSpread {
+    let key = if is_valid_prop_ident(key) {
+        PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
+    } else {
+        PropName::Str(Str {
+            span: DUMMY_SP,
+            value: key.into(),
+            raw: None,
+        })
+    };
+
     PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: if is_valid_prop_ident(key) {
-            PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
-        } else {
-            PropName::Str(Str {
-                span: DUMMY_SP,
-                value: key.into(),
-                raw: None,
-            })
-        },
+        key,
         value: Box::new(value),
     })))
 }
@@ -79,10 +81,10 @@ fn is_fn_component(ident: &Ident) -> bool {
     )
 }
 
-fn convert_jsx_member_expr(jsx_memeber: JSXMemberExpr) -> Expr {
+fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
         JSXObject::Ident(ident) => Expr::Ident(ident),
-        JSXObject::JSXMemberExpr(member) => convert_jsx_member_expr(*member),
+        JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
     };
 
     Expr::Member(MemberExpr {
@@ -97,7 +99,7 @@ fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> String {
     name_str
 }
 
-fn expr_container(container: &JSXExprContainer) -> Expr {
+fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
     match &container.expr {
         JSXExpr::JSXEmptyExpr(_) => null_expr(),
         JSXExpr::Expr(expr) => expr.as_ref().clone(),
@@ -127,7 +129,7 @@ fn build_children(
         .iter()
         .filter_map(|child| match child {
             JSXElementChild::JSXExprContainer(container) => {
-                Some(Some(prop_expr(expr_container(container))))
+                Some(Some(prop_expr(convert_jsx_container(container))))
             }
             JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
                 spread: Some(spread.span),
@@ -162,7 +164,9 @@ fn build_props(
                 let value = match &attr.value {
                     Some(value) => match value {
                         JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
-                        JSXAttrValue::JSXExprContainer(container) => expr_container(container),
+                        JSXAttrValue::JSXExprContainer(container) => {
+                            convert_jsx_container(container)
+                        }
                         JSXAttrValue::JSXElement(element) => transform_element(element, imports),
                         JSXAttrValue::JSXFragment(fragment) => {
                             transform_fragment(fragment, imports)
@@ -226,14 +230,14 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             }
 
             call_expr(
-                convert_jsx_member_expr(jsx_memeber.clone()),
+                convert_jsx_member(jsx_memeber.clone()),
                 vec![prop_expr(object_expr(props))],
             )
         }
-        JSXElementName::JSXNamespacedName(jsx_memeber) => {
+        JSXElementName::JSXNamespacedName(jsx_namespaced_name) => {
             let mut args = vec![
                 prop_expr(str_expr(
-                    convert_jsx_namespaced_name(jsx_memeber.clone()).into(),
+                    convert_jsx_namespaced_name(jsx_namespaced_name.clone()).into(),
                 )),
                 prop_expr(object_expr(vec![])),
             ];
