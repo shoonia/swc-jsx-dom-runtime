@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use swc_core::common::{SyntaxContext, DUMMY_SP};
+use swc_core::common::{Mark, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,11 +34,11 @@ pub struct ImportManager {
 }
 
 impl ImportManager {
-    pub fn new(ctxt: SyntaxContext) -> Self {
+    pub fn new() -> Self {
         Self {
             cache: HashMap::new(),
             specifiers: Vec::new(),
-            ctxt,
+            ctxt: SyntaxContext::empty().apply_mark(Mark::new()),
         }
     }
 

@@ -2,7 +2,7 @@ use std::{matches, vec};
 
 use crate::import_manager::{ImportManager, ImportName};
 use swc_core::atoms::Wtf8Atom;
-use swc_core::common::{util::take::Take, Mark, SyntaxContext, DUMMY_SP};
+use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
@@ -17,10 +17,10 @@ fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     })
 }
 
-fn object_expr() -> Expr {
+fn object_expr(props: Vec<PropOrSpread>) -> Expr {
     Expr::Object(ObjectLit {
         span: DUMMY_SP,
-        props: vec![],
+        props,
     })
 }
 
@@ -47,6 +47,13 @@ fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
         type_args: None,
         ctxt: SyntaxContext::empty(),
     })
+}
+
+fn key_value_prop(key: &str, value: Expr) -> PropOrSpread {
+    PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
+        key: PropName::Ident(IdentName::new(key.into(), DUMMY_SP)),
+        value: Box::new(value),
+    })))
 }
 
 fn is_fn_component(ident: &Ident) -> bool {
@@ -127,14 +134,23 @@ fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Ex
 
 fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
     let children = build_children(&element.children, imports);
+    let mut props = vec![];
+
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
-                call_expr(Expr::Ident(ident.clone()), vec![prop_expr(object_expr())])
+                if !children.is_empty() {
+                    props.push(key_value_prop("children", children_expr(children)));
+                }
+
+                call_expr(
+                    Expr::Ident(ident.clone()),
+                    vec![prop_expr(object_expr(props))],
+                )
             } else {
                 let mut args = vec![
                     prop_expr(str_expr(ident.sym.clone().into())),
-                    prop_expr(object_expr()),
+                    prop_expr(object_expr(vec![])),
                 ];
 
                 if !children.is_empty() {
@@ -144,17 +160,27 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                 call_expr(Expr::Ident(imports.add(ImportName::Jsx)), args)
             }
         }
-        JSXElementName::JSXMemberExpr(jsx_memeber) => call_expr(
-            convert_jsx_member_expr(jsx_memeber.clone()),
-            vec![prop_expr(object_expr())],
-        ),
-        JSXElementName::JSXNamespacedName(jsx_memeber) => call_expr(
-            Expr::Ident(imports.add(ImportName::Jsx)),
-            vec![
+        JSXElementName::JSXMemberExpr(jsx_memeber) => {
+            if !children.is_empty() {
+                props.push(key_value_prop("children", children_expr(children)));
+            }
+
+            call_expr(
+                convert_jsx_member_expr(jsx_memeber.clone()),
+                vec![prop_expr(object_expr(props))],
+            )
+        }
+        JSXElementName::JSXNamespacedName(jsx_memeber) => {
+            let mut args = vec![
                 prop_expr(convert_jsx_namespaced_name(jsx_memeber.clone())),
-                prop_expr(object_expr()),
-            ],
-        ),
+                prop_expr(object_expr(props)),
+            ];
+
+            if !children.is_empty() {
+                args.push(prop_expr(children_expr(children)));
+            }
+            call_expr(Expr::Ident(imports.add(ImportName::Jsx)), args)
+        }
     }
 }
 
@@ -165,7 +191,7 @@ pub struct JsxTransformer {
 impl JsxTransformer {
     pub fn new() -> Self {
         Self {
-            imports: ImportManager::new(SyntaxContext::empty().apply_mark(Mark::new())),
+            imports: ImportManager::new(),
         }
     }
 }
