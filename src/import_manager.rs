@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use swc_core::common::{Mark, SyntaxContext, DUMMY_SP};
+use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -30,7 +30,6 @@ impl ImportName {
 pub struct ImportManager {
     cache: HashMap<ImportName, Ident>,
     specifiers: Vec<ImportSpecifier>,
-    ctxt: SyntaxContext,
 }
 
 impl ImportManager {
@@ -38,7 +37,6 @@ impl ImportManager {
         Self {
             cache: HashMap::new(),
             specifiers: Vec::new(),
-            ctxt: SyntaxContext::empty().apply_mark(Mark::new()),
         }
     }
 
@@ -48,17 +46,16 @@ impl ImportManager {
         }
 
         let local_name: String = format!("_{}", import_name.as_str());
-        let local_ident = Ident::new(local_name.into(), DUMMY_SP, self.ctxt);
+        let local_ident = Ident::new_no_ctxt(local_name.into(), DUMMY_SP);
 
         self.cache.insert(import_name, local_ident.clone());
         self.specifiers
             .push(ImportSpecifier::Named(ImportNamedSpecifier {
                 span: DUMMY_SP,
                 local: local_ident.clone(),
-                imported: Some(ModuleExportName::Ident(Ident::new(
+                imported: Some(ModuleExportName::Ident(Ident::new_no_ctxt(
                     import_name.as_str().into(),
                     DUMMY_SP,
-                    self.ctxt,
                 ))),
                 is_type_only: false,
             }));
