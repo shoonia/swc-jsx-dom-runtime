@@ -1,4 +1,7 @@
-use crate::import_manager::ImportManager;
+use std::{matches, vec};
+
+use crate::import_manager::{ImportManager, ImportName};
+use swc_core::atoms::Wtf8Atom;
 use swc_core::common::{util::take::Take, Mark, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
@@ -12,6 +15,45 @@ fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
         span: DUMMY_SP,
         elems,
     })
+}
+
+fn object_expr() -> Expr {
+    Expr::Object(ObjectLit {
+        span: DUMMY_SP,
+        props: vec![],
+    })
+}
+
+fn str_expr(value: Wtf8Atom) -> Expr {
+    Expr::Lit(Lit::Str(Str {
+        span: DUMMY_SP,
+        value,
+        raw: None,
+    }))
+}
+
+fn fn_param(expr: Expr) -> ExprOrSpread {
+    ExprOrSpread {
+        spread: None,
+        expr: Box::new(expr),
+    }
+}
+
+fn call_expr(callee: Ident, args: Vec<ExprOrSpread>) -> Expr {
+    Expr::Call(CallExpr {
+        span: DUMMY_SP,
+        callee: Callee::Expr(Box::new(Expr::Ident(callee))),
+        args,
+        type_args: None,
+        ctxt: SyntaxContext::empty(),
+    })
+}
+
+fn is_fn_component(ident: &Ident) -> bool {
+    matches!(
+        ident.sym.as_bytes().first(),
+        Some(b'A'..=b'Z' | b'_' | b'$')
+    )
 }
 
 fn build_children(children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
@@ -31,11 +73,7 @@ fn build_children(children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> 
             })),
             JSXElementChild::JSXText(text) => Some(Some(ExprOrSpread {
                 spread: None,
-                expr: Box::new(Expr::Lit(Lit::Str(Str {
-                    span: text.span,
-                    value: text.value.clone(),
-                    raw: None,
-                }))),
+                expr: Box::new(str_expr(text.value.clone())),
             })),
             _ => None,
         })
@@ -53,11 +91,30 @@ fn transform_fragment(fragment: &JSXFragment) -> Expr {
                 spread: Some(_),
                 expr: _,
             }) => array_expr(elems),
-            Some(ExprOrSpread { spread: None, expr }) => *expr.clone(),
+            Some(ExprOrSpread { spread: None, expr }) => expr.as_ref().clone(),
             None => null_expr(),
         }
     } else {
         array_expr(elems)
+    }
+}
+
+fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
+    match &element.opening.name {
+        JSXElementName::Ident(ident) => {
+            if is_fn_component(ident) {
+                call_expr(ident.clone(), vec![fn_param(object_expr())])
+            } else {
+                call_expr(
+                    imports.add(ImportName::Jsx),
+                    vec![
+                        fn_param(str_expr(ident.sym.clone().into())),
+                        fn_param(object_expr()),
+                    ],
+                )
+            }
+        }
+        _ => null_expr(),
     }
 }
 
@@ -84,6 +141,7 @@ impl VisitMut for JsxTransformer {
 
         let expr = match node {
             Expr::JSXFragment(fragment) => transform_fragment(fragment),
+            Expr::JSXElement(element) => transform_element(element, &mut self.imports),
             _ => return,
         };
 
