@@ -47,7 +47,7 @@ impl ImportManager {
             return ident.clone();
         }
 
-        let local_name: String = format!("_{name}", name = import_name.as_str());
+        let local_name: String = format!("_{}", import_name.as_str());
         let local_ident = Ident::new(local_name.into(), DUMMY_SP, self.ctxt);
 
         self.cache.insert(import_name, local_ident.clone());

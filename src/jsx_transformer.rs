@@ -39,10 +39,10 @@ fn prop_expr(expr: Expr) -> ExprOrSpread {
     }
 }
 
-fn call_expr(callee: Ident, args: Vec<ExprOrSpread>) -> Expr {
+fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
     Expr::Call(CallExpr {
         span: DUMMY_SP,
-        callee: Callee::Expr(Box::new(Expr::Ident(callee))),
+        callee: Callee::Expr(Box::new(callee)),
         args,
         type_args: None,
         ctxt: SyntaxContext::empty(),
@@ -54,6 +54,24 @@ fn is_fn_component(ident: &Ident) -> bool {
         ident.sym.as_bytes().first(),
         Some(b'A'..=b'Z' | b'_' | b'$')
     )
+}
+
+fn convert_jsx_member_expr(jsx_memeber: JSXMemberExpr) -> Expr {
+    let obj_expr = match jsx_memeber.obj {
+        JSXObject::Ident(ident) => Expr::Ident(ident),
+        JSXObject::JSXMemberExpr(member) => convert_jsx_member_expr(*member),
+    };
+
+    Expr::Member(MemberExpr {
+        span: jsx_memeber.span,
+        obj: Box::new(obj_expr),
+        prop: MemberProp::Ident(jsx_memeber.prop),
+    })
+}
+
+fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> Expr {
+    let name_str: String = format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name);
+    str_expr(name_str.into())
 }
 
 fn build_children(children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
@@ -97,10 +115,10 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
-                call_expr(ident.clone(), vec![prop_expr(object_expr())])
+                call_expr(Expr::Ident(ident.clone()), vec![prop_expr(object_expr())])
             } else {
                 call_expr(
-                    imports.add(ImportName::Jsx),
+                    Expr::Ident(imports.add(ImportName::Jsx)),
                     vec![
                         prop_expr(str_expr(ident.sym.clone().into())),
                         prop_expr(object_expr()),
@@ -108,7 +126,17 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                 )
             }
         }
-        _ => null_expr(),
+        JSXElementName::JSXMemberExpr(jsx_memeber) => call_expr(
+            convert_jsx_member_expr(jsx_memeber.clone()),
+            vec![prop_expr(object_expr())],
+        ),
+        JSXElementName::JSXNamespacedName(jsx_memeber) => call_expr(
+            Expr::Ident(imports.add(ImportName::Jsx)),
+            vec![
+                prop_expr(convert_jsx_namespaced_name(jsx_memeber.clone())),
+                prop_expr(object_expr()),
+            ],
+        ),
     }
 }
 
