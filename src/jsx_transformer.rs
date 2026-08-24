@@ -12,10 +12,7 @@ fn null_expr() -> Expr {
 }
 
 fn bool_expr(value: bool) -> Expr {
-    Expr::Lit(Lit::Bool(Bool {
-        span: DUMMY_SP,
-        value,
-    }))
+    Expr::Lit(Lit::Bool(Bool::from(value)))
 }
 
 fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
