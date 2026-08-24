@@ -4,6 +4,7 @@ use crate::import_manager::{ImportManager, ImportName};
 use swc_core::atoms::Wtf8Atom;
 use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
+use swc_core::ecma::utils::is_valid_prop_ident;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 fn null_expr() -> Expr {
@@ -58,7 +59,15 @@ fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
 
 fn key_value_prop(key: &str, value: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key: PropName::Ident(IdentName::new(key.into(), DUMMY_SP)),
+        key: if is_valid_prop_ident(key) {
+            PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
+        } else {
+            PropName::Str(Str {
+                span: DUMMY_SP,
+                value: key.into(),
+                raw: None,
+            })
+        },
         value: Box::new(value),
     })))
 }

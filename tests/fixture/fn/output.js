@@ -5,3 +5,5 @@ App({ children: [_jsx("div", {}), _jsx("div", {})] });
 App({ num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3], empty: true });
 App({ num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3], children: "hello" });
 App({ ...data, num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3] });
+App({ "kebab-case-prop": "value" });
+App({ "name:space-prop": "value" });

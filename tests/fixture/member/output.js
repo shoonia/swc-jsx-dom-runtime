@@ -7,3 +7,5 @@ Member.Exp({ children: [_jsx("div", {}), _jsx("span", {})] });
 A.B({ num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3], empty: true });
 A.B({ num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3], children: "hello" });
 A.B({ ...data, num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3] });
+X.Y({ "kebab-case-prop": "value" });
+X.Y({ "name:space-prop": "value" });

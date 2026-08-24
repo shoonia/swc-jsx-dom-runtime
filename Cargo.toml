@@ -12,6 +12,7 @@ lto = true
 [dependencies]
 serde = "1"
 swc_core = { version = "77.0.*", features = [
+  "ecma_utils",
   "ecma_plugin_transform",
   "ecma_parser",
   "ecma_codegen",

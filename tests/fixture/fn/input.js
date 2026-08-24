@@ -4,3 +4,5 @@
 <App num={1} str="s" bool={true} obj={{}} arr={[1, 2, 3]} empty />;
 <App num={1} str="s" bool={true} obj={{}} arr={[1, 2, 3]}>hello</App>;
 <App {...data} num={1} str="s" bool={true} obj={{}} arr={[1, 2, 3]} />;
+<App kebab-case-prop="value" />;
+<App name:space-prop="value" />;
