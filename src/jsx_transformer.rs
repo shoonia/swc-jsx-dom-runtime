@@ -32,7 +32,7 @@ fn str_expr(value: Wtf8Atom) -> Expr {
     }))
 }
 
-fn fn_param(expr: Expr) -> ExprOrSpread {
+fn prop_expr(expr: Expr) -> ExprOrSpread {
     ExprOrSpread {
         spread: None,
         expr: Box::new(expr),
@@ -62,19 +62,13 @@ fn build_children(children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> 
         .filter_map(|child| match child {
             JSXElementChild::JSXExprContainer(container) => match &container.expr {
                 JSXExpr::JSXEmptyExpr(_) => None,
-                JSXExpr::Expr(expr) => Some(Some(ExprOrSpread {
-                    spread: None,
-                    expr: expr.clone(),
-                })),
+                JSXExpr::Expr(expr) => Some(Some(prop_expr(expr.as_ref().clone()))),
             },
             JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
                 spread: Some(spread.span),
                 expr: spread.expr.clone(),
             })),
-            JSXElementChild::JSXText(text) => Some(Some(ExprOrSpread {
-                spread: None,
-                expr: Box::new(str_expr(text.value.clone())),
-            })),
+            JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
             _ => None,
         })
         .collect()
@@ -103,13 +97,13 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
-                call_expr(ident.clone(), vec![fn_param(object_expr())])
+                call_expr(ident.clone(), vec![prop_expr(object_expr())])
             } else {
                 call_expr(
                     imports.add(ImportName::Jsx),
                     vec![
-                        fn_param(str_expr(ident.sym.clone().into())),
-                        fn_param(object_expr()),
+                        prop_expr(str_expr(ident.sym.clone().into())),
+                        prop_expr(object_expr()),
                     ],
                 )
             }
