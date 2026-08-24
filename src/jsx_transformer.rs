@@ -74,30 +74,8 @@ fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> Expr {
     str_expr(name_str.into())
 }
 
-fn build_children(children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
-    children
-        .iter()
-        .filter_map(|child| match child {
-            JSXElementChild::JSXExprContainer(container) => match &container.expr {
-                JSXExpr::JSXEmptyExpr(_) => None,
-                JSXExpr::Expr(expr) => Some(Some(prop_expr(expr.as_ref().clone()))),
-            },
-            JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
-                spread: Some(spread.span),
-                expr: spread.expr.clone(),
-            })),
-            JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
-            _ => None,
-        })
-        .collect()
-}
-
-fn transform_fragment(fragment: &JSXFragment) -> Expr {
-    let elems: Vec<Option<ExprOrSpread>> = build_children(&fragment.children);
-
-    if elems.is_empty() {
-        null_expr()
-    } else if elems.len() == 1 {
+fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
+    if elems.len() == 1 {
         match &elems[0] {
             Some(ExprOrSpread {
                 spread: Some(_),
@@ -111,19 +89,59 @@ fn transform_fragment(fragment: &JSXFragment) -> Expr {
     }
 }
 
+fn build_children(
+    children: &Vec<JSXElementChild>,
+    imports: &mut ImportManager,
+) -> Vec<Option<ExprOrSpread>> {
+    children
+        .iter()
+        .filter_map(|child| match child {
+            JSXElementChild::JSXExprContainer(container) => match &container.expr {
+                JSXExpr::JSXEmptyExpr(_) => None,
+                JSXExpr::Expr(expr) => Some(Some(prop_expr(expr.as_ref().clone()))),
+            },
+            JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
+                spread: Some(spread.span),
+                expr: spread.expr.clone(),
+            })),
+            JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
+            JSXElementChild::JSXElement(element) => {
+                Some(Some(prop_expr(transform_element(element, imports))))
+            }
+            JSXElementChild::JSXFragment(fragment) => {
+                Some(Some(prop_expr(transform_fragment(fragment, imports))))
+            }
+        })
+        .collect()
+}
+
+fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Expr {
+    let elems = build_children(&fragment.children, imports);
+
+    if elems.is_empty() {
+        null_expr()
+    } else {
+        children_expr(elems)
+    }
+}
+
 fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
+    let children = build_children(&element.children, imports);
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
                 call_expr(Expr::Ident(ident.clone()), vec![prop_expr(object_expr())])
             } else {
-                call_expr(
-                    Expr::Ident(imports.add(ImportName::Jsx)),
-                    vec![
-                        prop_expr(str_expr(ident.sym.clone().into())),
-                        prop_expr(object_expr()),
-                    ],
-                )
+                let mut args = vec![
+                    prop_expr(str_expr(ident.sym.clone().into())),
+                    prop_expr(object_expr()),
+                ];
+
+                if !children.is_empty() {
+                    args.push(prop_expr(children_expr(children)));
+                }
+
+                call_expr(Expr::Ident(imports.add(ImportName::Jsx)), args)
             }
         }
         JSXElementName::JSXMemberExpr(jsx_memeber) => call_expr(
@@ -162,7 +180,7 @@ impl VisitMut for JsxTransformer {
         node.visit_mut_children_with(self);
 
         let expr = match node {
-            Expr::JSXFragment(fragment) => transform_fragment(fragment),
+            Expr::JSXFragment(fragment) => transform_fragment(fragment, &mut self.imports),
             Expr::JSXElement(element) => transform_element(element, &mut self.imports),
             _ => return,
         };
