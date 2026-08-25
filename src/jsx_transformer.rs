@@ -1,18 +1,9 @@
-use std::{matches, vec};
-
 use crate::builders::*;
 use crate::collections::*;
 use crate::import_manager::*;
+use std::vec;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
-
-#[inline(always)]
-fn is_fn_component(ident: &Ident) -> bool {
-    matches!(
-        ident.sym.as_bytes().first(),
-        Some(b'A'..=b'Z' | b'_' | b'$')
-    )
-}
 
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
@@ -28,8 +19,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> String {
-    let name_str: String = format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name);
-    name_str
+    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name) as String
 }
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
@@ -148,6 +138,11 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                     props.push(prop(
                         prop_ident("_"),
                         Expr::Ident(imports.add(ImportName::SvgNs)),
+                    ));
+                } else if is_mathml_tag(&ident.sym) {
+                    props.push(prop(
+                        prop_ident("_"),
+                        Expr::Ident(imports.add(ImportName::MathmlNs)),
                     ));
                 }
 
