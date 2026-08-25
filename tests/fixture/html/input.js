@@ -6,3 +6,4 @@
 <div tabIndex={0} />;
 <a className="my-class" />;
 <a xlink:href="https://example.com" />;
+<input required readOnly disabled />;

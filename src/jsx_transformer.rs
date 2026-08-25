@@ -225,26 +225,30 @@ impl VisitMut for JsxTransformer {
         for attr in node.attrs.iter_mut() {
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &mut attr.name {
+                    if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
+                        ident.sym = attr.to_string().into();
+                        continue;
+                    }
+
                     if is_svg {
                         if let Some(attr) = SVG_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
                             ident.sym = attr.to_string().into();
-                            continue;
                         }
                         continue;
                     }
 
+                    let attr_name = ident.sym.to_lowercase();
+
                     if is_html {
-                        if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
-                            ident.sym = attr.to_string().into();
-                            continue;
-                        }
+                        ident.sym = attr_name.clone().into();
                     }
 
-                    ident.sym = ident.sym.to_lowercase().into();
-                    continue;
-                }
-
-                if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
+                    if is_bool_attr(&attr_name) {
+                        if attr.value.is_none() {
+                            attr.value = Some(JSXAttrValue::Str(Str::from("")));
+                        }
+                    }
+                } else if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
                     if namespaced.ns.sym == "xlink" && namespaced.name.sym == "href" {
                         attr.name = JSXAttrName::from(namespaced.name.clone());
                     }

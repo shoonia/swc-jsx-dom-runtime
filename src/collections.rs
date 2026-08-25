@@ -85,6 +85,50 @@ pub fn is_mathml_tag(tag: &str) -> bool {
     )
 }
 
+#[inline(always)]
+pub fn is_bool_attr(attr: &str) -> bool {
+    matches!(
+        attr,
+        "async"
+            | "autofocus"
+            | "autocomplete"
+            | "autoplay"
+            | "attributionsrc"
+            | "controls"
+            | "checked"
+            | "crossorigin"
+            | "capture"
+            | "defer"
+            | "disabled"
+            | "contenteditable"
+            | "formnovalidate"
+            | "readonly"
+            | "multiple"
+            | "loop"
+            | "required"
+            | "hidden"
+            | "open"
+            | "selected"
+            | "nomodule"
+            | "noshade"
+            | "novalidate"
+            | "playsinline"
+            | "reversed"
+            | "inert"
+            | "disablepictureinpicture"
+            | "disableremoteplayback"
+            | "popover"
+            | "itemscope"
+            | "declare"
+            | "moz-opaque"
+            | "ismap"
+            | "shadowrootclonable"
+            | "shadowrootdelegatesfocus"
+            | "shadowrootserializable"
+            | "webkitdirectory"
+    )
+}
+
 pub static HTML_DOM_ATTRIBUTES: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {
         HashMap::from([

@@ -7,3 +7,4 @@ _jsx("div", {}, _jsx("p", {}, _jsx("span", {}, "hello")));
 _jsx("div", { tabindex: 0 });
 _jsx("a", { class: "my-class" });
 _jsx("a", { href: "https://example.com" });
+_jsx("input", { required: "", readonly: "", disabled: "" });
