@@ -6,4 +6,5 @@
 <div tabIndex={0} />;
 <a className="my-class" />;
 <a xlink:href="https://example.com" />;
-<input required readOnly disabled />;
+<input required readOnly disabled spellcheck />;
+<div aria-hidden data-test />;

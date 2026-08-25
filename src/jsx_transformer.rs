@@ -247,6 +247,14 @@ impl VisitMut for JsxTransformer {
                         if attr.value.is_none() {
                             attr.value = Some(JSXAttrValue::Str(Str::from("")));
                         }
+                        continue;
+                    }
+
+                    if is_enumerated_attr(&attr_name) {
+                        if attr.value.is_none() {
+                            attr.value = Some(JSXAttrValue::Str(Str::from("true")));
+                        }
+                        continue;
                     }
                 } else if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
                     if namespaced.ns.sym == "xlink" && namespaced.name.sym == "href" {

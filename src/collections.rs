@@ -129,6 +129,13 @@ pub fn is_bool_attr(attr: &str) -> bool {
     )
 }
 
+#[inline(always)]
+pub fn is_enumerated_attr(attr: &str) -> bool {
+    matches!(attr, "draggable" | "spellcheck" | "writingsuggestions")
+        || attr.starts_with("aria-")
+        || attr.starts_with("data-")
+}
+
 pub static HTML_DOM_ATTRIBUTES: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {
         HashMap::from([
