@@ -7,3 +7,4 @@ App({ num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3], children: "hello" }
 App({ ...data, num: 1, str: "s", bool: true, obj: {}, arr: [1, 2, 3] });
 App({ "kebab-case-prop": "value" });
 App({ "name:space-prop": "value" });
+App({ camelCase: null });

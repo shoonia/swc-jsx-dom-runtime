@@ -192,9 +192,28 @@ impl JsxTransformer {
 }
 
 impl VisitMut for JsxTransformer {
-    fn visit_mut_module(&mut self, node: &mut Module) {
-        node.visit_mut_children_with(self);
-        self.imports.inject_into_module(node);
+    fn visit_mut_module(&mut self, module: &mut Module) {
+        module.visit_mut_children_with(self);
+        self.imports.inject_into_module(module);
+    }
+
+    fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
+        match &node.name {
+            JSXElementName::JSXMemberExpr(_) | JSXElementName::JSXNamespacedName(_) => return,
+            JSXElementName::Ident(ident) => {
+                if is_fn_component(ident) {
+                    return;
+                }
+            }
+        };
+
+        for attr in node.attrs.iter_mut() {
+            if let JSXAttrOrSpread::JSXAttr(attr) = attr {
+                if let JSXAttrName::Ident(ident) = &mut attr.name {
+                    ident.sym = ident.sym.to_lowercase().into();
+                }
+            }
+        }
     }
 
     fn visit_mut_expr(&mut self, node: &mut Expr) {
