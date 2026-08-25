@@ -1,80 +1,10 @@
 use std::{matches, vec};
 
-use crate::import_manager::{ImportManager, ImportName};
-use swc_core::atoms::Wtf8Atom;
-use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
+use crate::builders::*;
+use crate::collections::*;
+use crate::import_manager::*;
 use swc_core::ecma::ast::*;
-use swc_core::ecma::utils::is_valid_prop_ident;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
-
-#[inline(always)]
-fn null_expr() -> Expr {
-    Expr::Lit(Lit::Null(Null::dummy()))
-}
-
-#[inline(always)]
-fn bool_expr(value: bool) -> Expr {
-    Expr::Lit(Lit::Bool(Bool::from(value)))
-}
-
-#[inline(always)]
-fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
-    Expr::Array(ArrayLit {
-        span: DUMMY_SP,
-        elems,
-    })
-}
-
-#[inline(always)]
-fn object_expr(props: Vec<PropOrSpread>) -> Expr {
-    Expr::Object(ObjectLit {
-        span: DUMMY_SP,
-        props,
-    })
-}
-
-#[inline(always)]
-fn str_expr(value: Wtf8Atom) -> Expr {
-    Expr::Lit(Lit::Str(Str::from(value)))
-}
-
-#[inline(always)]
-fn prop_expr(expr: Expr) -> ExprOrSpread {
-    ExprOrSpread::from(Box::new(expr))
-}
-
-#[inline(always)]
-fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
-    Expr::Call(CallExpr {
-        span: DUMMY_SP,
-        callee: Callee::Expr(Box::new(callee)),
-        args,
-        type_args: None,
-        ctxt: SyntaxContext::empty(),
-    })
-}
-
-#[inline(always)]
-fn prop_ident(key: &str) -> PropName {
-    PropName::Ident(IdentName::from(key))
-}
-
-#[inline(always)]
-fn prop_key(key: &str) -> PropName {
-    if is_valid_prop_ident(key) {
-        prop_ident(key)
-    } else {
-        PropName::Str(Str::from(key))
-    }
-}
-
-#[inline(always)]
-fn prop(key: PropName, value: Expr) -> PropOrSpread {
-    PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-        key,
-        value: Box::new(value),
-    })))
-}
 
 #[inline(always)]
 fn is_fn_component(ident: &Ident) -> bool {
@@ -200,11 +130,11 @@ fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Ex
 
 fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
     let children = build_children(&element.children, imports);
+    let mut props = build_props(&element.opening.attrs, imports);
 
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
-                let mut props = build_props(&element.opening.attrs, imports);
                 if !children.is_empty() {
                     props.push(prop(prop_ident("children"), children_expr(children)));
                 }
@@ -214,9 +144,16 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                     vec![prop_expr(object_expr(props))],
                 )
             } else {
+                if is_svg_tag(&ident.sym) {
+                    props.push(prop(
+                        prop_ident("_"),
+                        Expr::Ident(imports.add(ImportName::SvgNs)),
+                    ));
+                }
+
                 let mut args = vec![
                     prop_expr(str_expr(ident.sym.clone().into())),
-                    prop_expr(object_expr(vec![])),
+                    prop_expr(object_expr(props)),
                 ];
 
                 if !children.is_empty() {
@@ -227,7 +164,6 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             }
         }
         JSXElementName::JSXMemberExpr(jsx_memeber) => {
-            let mut props = build_props(&element.opening.attrs, imports);
             if !children.is_empty() {
                 props.push(prop(prop_ident("children"), children_expr(children)));
             }
@@ -242,7 +178,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                 prop_expr(str_expr(
                     convert_jsx_namespaced_name(jsx_namespaced_name.clone()).into(),
                 )),
-                prop_expr(object_expr(vec![])),
+                prop_expr(object_expr(props)),
             ];
 
             if !children.is_empty() {
