@@ -198,19 +198,33 @@ impl VisitMut for JsxTransformer {
     }
 
     fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
-        match &node.name {
+        let tag_name = match &node.name {
             JSXElementName::JSXMemberExpr(_) | JSXElementName::JSXNamespacedName(_) => return,
             JSXElementName::Ident(ident) => {
                 if is_fn_component(ident) {
                     return;
                 }
+                ident.sym.as_str()
             }
         };
+
+        let is_svg = is_svg_tag(tag_name);
 
         for attr in node.attrs.iter_mut() {
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &mut attr.name {
-                    ident.sym = ident.sym.to_lowercase().into();
+                    if is_svg {
+                        if let Some(attr) = SVG_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
+                            ident.sym = attr.to_string().into();
+                        }
+                        continue;
+                    }
+
+                    if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
+                        ident.sym = attr.to_string().into();
+                    } else {
+                        ident.sym = ident.sym.to_lowercase().into();
+                    }
                 }
             }
         }
