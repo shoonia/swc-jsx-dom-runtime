@@ -7,14 +7,17 @@ use swc_core::ecma::ast::*;
 use swc_core::ecma::utils::is_valid_prop_ident;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
+#[inline(always)]
 fn null_expr() -> Expr {
     Expr::Lit(Lit::Null(Null::dummy()))
 }
 
+#[inline(always)]
 fn bool_expr(value: bool) -> Expr {
     Expr::Lit(Lit::Bool(Bool::from(value)))
 }
 
+#[inline(always)]
 fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     Expr::Array(ArrayLit {
         span: DUMMY_SP,
@@ -22,6 +25,7 @@ fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     })
 }
 
+#[inline(always)]
 fn object_expr(props: Vec<PropOrSpread>) -> Expr {
     Expr::Object(ObjectLit {
         span: DUMMY_SP,
@@ -29,21 +33,17 @@ fn object_expr(props: Vec<PropOrSpread>) -> Expr {
     })
 }
 
+#[inline(always)]
 fn str_expr(value: Wtf8Atom) -> Expr {
-    Expr::Lit(Lit::Str(Str {
-        span: DUMMY_SP,
-        value,
-        raw: None,
-    }))
+    Expr::Lit(Lit::Str(Str::from(value)))
 }
 
+#[inline(always)]
 fn prop_expr(expr: Expr) -> ExprOrSpread {
-    ExprOrSpread {
-        spread: None,
-        expr: Box::new(expr),
-    }
+    ExprOrSpread::from(Box::new(expr))
 }
 
+#[inline(always)]
 fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
     Expr::Call(CallExpr {
         span: DUMMY_SP,
@@ -54,23 +54,29 @@ fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
     })
 }
 
-fn key_value_prop(key: &str, value: Expr) -> PropOrSpread {
-    let key = if is_valid_prop_ident(key) {
-        PropName::Ident(IdentName::new(key.into(), DUMMY_SP))
-    } else {
-        PropName::Str(Str {
-            span: DUMMY_SP,
-            value: key.into(),
-            raw: None,
-        })
-    };
+#[inline(always)]
+fn prop_ident(key: &str) -> PropName {
+    PropName::Ident(IdentName::from(key))
+}
 
+#[inline(always)]
+fn prop_key(key: &str) -> PropName {
+    if is_valid_prop_ident(key) {
+        prop_ident(key)
+    } else {
+        PropName::Str(Str::from(key))
+    }
+}
+
+#[inline(always)]
+fn prop(key: PropName, value: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
         key,
         value: Box::new(value),
     })))
 }
 
+#[inline(always)]
 fn is_fn_component(ident: &Ident) -> bool {
     matches!(
         ident.sym.as_bytes().first(),
@@ -172,7 +178,7 @@ fn build_props(
                     None => bool_expr(true),
                 };
 
-                Some(key_value_prop(&key, value))
+                Some(prop(prop_key(&key), value))
             }
             JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
                 dot3_token: spread.dot3_token,
@@ -200,7 +206,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             if is_fn_component(ident) {
                 let mut props = build_props(&element.opening.attrs, imports);
                 if !children.is_empty() {
-                    props.push(key_value_prop("children", children_expr(children)));
+                    props.push(prop(prop_ident("children"), children_expr(children)));
                 }
 
                 call_expr(
@@ -223,7 +229,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
         JSXElementName::JSXMemberExpr(jsx_memeber) => {
             let mut props = build_props(&element.opening.attrs, imports);
             if !children.is_empty() {
-                props.push(key_value_prop("children", children_expr(children)));
+                props.push(prop(prop_ident("children"), children_expr(children)));
             }
 
             call_expr(

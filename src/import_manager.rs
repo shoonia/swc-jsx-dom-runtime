@@ -46,17 +46,14 @@ impl ImportManager {
         }
 
         let local_name: String = format!("_{}", import_name.as_str());
-        let local_ident = Ident::new_no_ctxt(local_name.into(), DUMMY_SP);
+        let local_ident = Ident::from(local_name);
 
         self.cache.insert(import_name, local_ident.clone());
         self.specifiers
             .push(ImportSpecifier::Named(ImportNamedSpecifier {
                 span: DUMMY_SP,
                 local: local_ident.clone(),
-                imported: Some(ModuleExportName::Ident(Ident::new_no_ctxt(
-                    import_name.as_str().into(),
-                    DUMMY_SP,
-                ))),
+                imported: Some(ModuleExportName::Ident(Ident::from(import_name.as_str()))),
                 is_type_only: false,
             }));
 
@@ -73,11 +70,7 @@ impl ImportManager {
             ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
                 span: DUMMY_SP,
                 specifiers: self.specifiers.clone(),
-                src: Box::new(Str {
-                    span: DUMMY_SP,
-                    value: "jsx-dom-runtime".into(),
-                    raw: None,
-                }),
+                src: Box::new(Str::from("jsx-dom-runtime")),
                 type_only: false,
                 with: None,
                 phase: Default::default(),
