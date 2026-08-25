@@ -198,6 +198,10 @@ impl VisitMut for JsxTransformer {
     }
 
     fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
+        if node.attrs.is_empty() {
+            return;
+        }
+
         let tag_name = match &node.name {
             JSXElementName::JSXMemberExpr(_) => return,
             JSXElementName::JSXNamespacedName(_) => return,
@@ -212,8 +216,9 @@ impl VisitMut for JsxTransformer {
         let is_svg = is_svg_tag(tag_name);
         let is_html = is_html_tag(tag_name);
         let is_standard = is_html || is_svg || is_mathml_tag(tag_name);
+        let is_custom = !is_standard && tag_name.contains('-');
 
-        if !is_standard {
+        if !(is_standard || is_custom) {
             return;
         }
 
@@ -236,6 +241,13 @@ impl VisitMut for JsxTransformer {
                     }
 
                     ident.sym = ident.sym.to_lowercase().into();
+                    continue;
+                }
+
+                if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
+                    if namespaced.ns.sym == "xlink" && namespaced.name.sym == "href" {
+                        attr.name = JSXAttrName::from(namespaced.name.clone());
+                    }
                 }
             }
         }
