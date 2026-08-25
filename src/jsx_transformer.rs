@@ -199,7 +199,8 @@ impl VisitMut for JsxTransformer {
 
     fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
         let tag_name = match &node.name {
-            JSXElementName::JSXMemberExpr(_) | JSXElementName::JSXNamespacedName(_) => return,
+            JSXElementName::JSXMemberExpr(_) => return,
+            JSXElementName::JSXNamespacedName(_) => return,
             JSXElementName::Ident(ident) => {
                 if is_fn_component(ident) {
                     return;
@@ -209,6 +210,12 @@ impl VisitMut for JsxTransformer {
         };
 
         let is_svg = is_svg_tag(tag_name);
+        let is_html = is_html_tag(tag_name);
+        let is_standard = is_html || is_svg || is_mathml_tag(tag_name);
+
+        if !is_standard {
+            return;
+        }
 
         for attr in node.attrs.iter_mut() {
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
@@ -216,15 +223,19 @@ impl VisitMut for JsxTransformer {
                     if is_svg {
                         if let Some(attr) = SVG_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
                             ident.sym = attr.to_string().into();
+                            continue;
                         }
                         continue;
                     }
 
-                    if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
-                        ident.sym = attr.to_string().into();
-                    } else {
-                        ident.sym = ident.sym.to_lowercase().into();
+                    if is_html {
+                        if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
+                            ident.sym = attr.to_string().into();
+                            continue;
+                        }
                     }
+
+                    ident.sym = ident.sym.to_lowercase().into();
                 }
             }
         }
