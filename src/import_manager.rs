@@ -28,7 +28,7 @@ impl ImportName {
 }
 
 pub struct ImportManager {
-    cache: HashMap<ImportName, Ident>,
+    cache: HashMap<ImportName, Expr>,
     specifiers: Vec<ImportSpecifier>,
 }
 
@@ -40,24 +40,25 @@ impl ImportManager {
         }
     }
 
-    pub fn add(&mut self, import_name: ImportName) -> Ident {
+    pub fn add(&mut self, import_name: ImportName) -> Expr {
         if let Some(ident) = self.cache.get(&import_name) {
             return ident.clone();
         }
 
         let local_name: String = format!("_{}", import_name.as_str());
         let local_ident = Ident::from(local_name);
+        let expr_ident = Expr::Ident(local_ident.clone());
 
-        self.cache.insert(import_name, local_ident.clone());
+        self.cache.insert(import_name, expr_ident.clone());
         self.specifiers
             .push(ImportSpecifier::Named(ImportNamedSpecifier {
                 span: DUMMY_SP,
-                local: local_ident.clone(),
+                local: local_ident,
                 imported: Some(ModuleExportName::Ident(Ident::from(import_name.as_str()))),
                 is_type_only: false,
             }));
 
-        local_ident
+        expr_ident
     }
 
     pub fn inject_into_module(&self, module: &mut Module) {

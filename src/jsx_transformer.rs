@@ -5,6 +5,9 @@ use std::vec;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
+const CHILDREN_KEY: &str = "children";
+const NS_KEY: &str = "_";
+
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
         JSXObject::Ident(ident) => Expr::Ident(ident),
@@ -78,9 +81,9 @@ fn build_props(
         .filter_map(|attr| match attr {
             JSXAttrOrSpread::JSXAttr(attr) => {
                 let key = match &attr.name {
-                    JSXAttrName::Ident(ident) => ident.sym.clone(),
+                    JSXAttrName::Ident(ident) => ident.sym.as_str(),
                     JSXAttrName::JSXNamespacedName(namespaced) => {
-                        convert_jsx_namespaced_name(namespaced.clone()).into()
+                        &convert_jsx_namespaced_name(namespaced.clone())
                     }
                 };
 
@@ -98,7 +101,7 @@ fn build_props(
                     None => bool_expr(true),
                 };
 
-                Some(prop(prop_key(&key), value))
+                Some(prop(prop_key(key), value))
             }
             JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
                 dot3_token: spread.dot3_token,
@@ -126,7 +129,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
         JSXElementName::Ident(ident) => {
             if is_fn_component(ident) {
                 if !children.is_empty() {
-                    props.push(prop(prop_ident("children"), children_expr(children)));
+                    props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
                 }
 
                 call_expr(
@@ -135,15 +138,9 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                 )
             } else {
                 if is_svg_tag(&ident.sym) {
-                    props.push(prop(
-                        prop_ident("_"),
-                        Expr::Ident(imports.add(ImportName::SvgNs)),
-                    ));
+                    props.push(prop(prop_ident(NS_KEY), imports.add(ImportName::SvgNs)));
                 } else if is_mathml_tag(&ident.sym) {
-                    props.push(prop(
-                        prop_ident("_"),
-                        Expr::Ident(imports.add(ImportName::MathmlNs)),
-                    ));
+                    props.push(prop(prop_ident(NS_KEY), imports.add(ImportName::MathmlNs)));
                 }
 
                 let mut args = vec![
@@ -155,12 +152,12 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                     args.push(prop_expr(children_expr(children)));
                 }
 
-                call_expr(Expr::Ident(imports.add(ImportName::Jsx)), args)
+                call_expr(imports.add(ImportName::Jsx), args)
             }
         }
         JSXElementName::JSXMemberExpr(jsx_memeber) => {
             if !children.is_empty() {
-                props.push(prop(prop_ident("children"), children_expr(children)));
+                props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
             }
 
             call_expr(
@@ -168,18 +165,16 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                 vec![prop_expr(object_expr(props))],
             )
         }
-        JSXElementName::JSXNamespacedName(jsx_namespaced_name) => {
+        JSXElementName::JSXNamespacedName(name) => {
             let mut args = vec![
-                prop_expr(str_expr(
-                    convert_jsx_namespaced_name(jsx_namespaced_name.clone()).into(),
-                )),
+                prop_expr(str_expr(convert_jsx_namespaced_name(name.clone()).into())),
                 prop_expr(object_expr(props)),
             ];
 
             if !children.is_empty() {
                 args.push(prop_expr(children_expr(children)));
             }
-            call_expr(Expr::Ident(imports.add(ImportName::Jsx)), args)
+            call_expr(imports.add(ImportName::Jsx), args)
         }
     }
 }
