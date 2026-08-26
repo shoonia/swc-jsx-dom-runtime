@@ -71,3 +71,8 @@ pub fn prop(key: PropName, value: Expr) -> PropOrSpread {
         value: Box::new(value),
     })))
 }
+
+#[inline(always)]
+pub fn attr_val_str(value: &str) -> JSXAttrValue {
+    JSXAttrValue::Str(Str::from(value))
+}

@@ -62,9 +62,10 @@ fn build_children(
                 expr: spread.expr.clone(),
             })),
             JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
-            JSXElementChild::JSXElement(element) => {
-                Some(Some(prop_expr(transform_element(element, imports))))
-            }
+            JSXElementChild::JSXElement(element) => Some(Some(prop_expr(transform_element(
+                element.as_ref(),
+                imports,
+            )))),
             JSXElementChild::JSXFragment(fragment) => {
                 Some(Some(prop_expr(transform_fragment(fragment, imports))))
             }
@@ -93,7 +94,9 @@ fn build_props(
                         JSXAttrValue::JSXExprContainer(container) => {
                             convert_jsx_container(container)
                         }
-                        JSXAttrValue::JSXElement(element) => transform_element(element, imports),
+                        JSXAttrValue::JSXElement(element) => {
+                            transform_element(element.as_ref(), imports)
+                        }
                         JSXAttrValue::JSXFragment(fragment) => {
                             transform_fragment(fragment, imports)
                         }
@@ -249,14 +252,21 @@ impl VisitMut for JsxTransformer {
 
                     if is_bool_attr(&attr_name) {
                         if attr.value.is_none() {
-                            attr.value = Some(JSXAttrValue::Str(Str::from("")));
+                            attr.value = Some(attr_val_str(""));
                         }
                         continue;
                     }
 
                     if is_enumerated_attr(&attr_name) {
                         if attr.value.is_none() {
-                            attr.value = Some(JSXAttrValue::Str(Str::from("true")));
+                            attr.value = Some(attr_val_str("true"));
+                        } else if let Some(JSXAttrValue::JSXExprContainer(container)) = &attr.value
+                        {
+                            if let JSXExpr::Expr(expr) = &container.expr {
+                                if let Expr::Lit(Lit::Bool(val)) = expr.as_ref() {
+                                    attr.value = Some(attr_val_str(&val.value.to_string()));
+                                }
+                            }
                         }
                         continue;
                     }
@@ -274,7 +284,7 @@ impl VisitMut for JsxTransformer {
 
         let expr = match node {
             Expr::JSXFragment(fragment) => transform_fragment(fragment, &mut self.imports),
-            Expr::JSXElement(element) => transform_element(element, &mut self.imports),
+            Expr::JSXElement(element) => transform_element(element.as_ref(), &mut self.imports),
             _ => return,
         };
 

@@ -8,3 +8,4 @@
 <a xlink:href="https://example.com" />;
 <input required readOnly disabled spellcheck />;
 <div aria-hidden data-test />;
+<div aria-hidden={false} data-test={true} />;
