@@ -4,6 +4,7 @@ use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata
 
 mod builders;
 mod collections;
+mod consts;
 mod import_manager;
 pub mod jsx_transformer;
 

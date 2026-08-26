@@ -1,13 +1,10 @@
 use crate::builders::*;
 use crate::collections::*;
+use crate::consts::*;
 use crate::import_manager::*;
 use std::vec;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
-
-const CHILDREN_KEY: &str = "children";
-const NS_KEY: &str = "_";
-const EVENT_KEY: &str = "$";
 
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
@@ -288,9 +285,11 @@ impl VisitMut for JsxTransformer {
                             continue;
                         }
                         "attr" => {
+                            remove_indexes.push(index);
                             continue;
                         }
                         "prop" => {
+                            remove_indexes.push(index);
                             continue;
                         }
                         _ => {}
