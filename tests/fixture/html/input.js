@@ -9,3 +9,5 @@
 <input required readOnly disabled spellcheck />;
 <div aria-hidden data-test />;
 <div aria-hidden={false} data-test={true} />;
+<div on:click={() => console.log("clicked")} />;
+<div on:click={() => 1} on:mouseover={() => 2} />;

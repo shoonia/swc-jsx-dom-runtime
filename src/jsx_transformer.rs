@@ -7,6 +7,7 @@ use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 const CHILDREN_KEY: &str = "children";
 const NS_KEY: &str = "_";
+const EVENT_KEY: &str = "$";
 
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
@@ -44,6 +45,18 @@ fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
         }
     } else {
         array_expr(elems)
+    }
+}
+
+fn convert_jsx_attr_value(value: Option<&JSXAttrValue>, imports: &mut ImportManager) -> Expr {
+    match value {
+        Some(value) => match value {
+            JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
+            JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
+            JSXAttrValue::JSXElement(element) => transform_element(element.as_ref(), imports),
+            JSXAttrValue::JSXFragment(fragment) => transform_fragment(fragment, imports),
+        },
+        None => bool_expr(true),
     }
 }
 
@@ -88,23 +101,10 @@ fn build_props(
                     }
                 };
 
-                let value = match &attr.value {
-                    Some(value) => match value {
-                        JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
-                        JSXAttrValue::JSXExprContainer(container) => {
-                            convert_jsx_container(container)
-                        }
-                        JSXAttrValue::JSXElement(element) => {
-                            transform_element(element.as_ref(), imports)
-                        }
-                        JSXAttrValue::JSXFragment(fragment) => {
-                            transform_fragment(fragment, imports)
-                        }
-                    },
-                    None => bool_expr(true),
-                };
-
-                Some(prop(prop_key(key), value))
+                Some(prop(
+                    prop_key(key),
+                    convert_jsx_attr_value(attr.value.as_ref(), imports),
+                ))
             }
             JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
                 dot3_token: spread.dot3_token,
@@ -225,7 +225,12 @@ impl VisitMut for JsxTransformer {
             return;
         }
 
-        for attr in node.attrs.iter_mut() {
+        let mut remove_indexes = Vec::<usize>::new();
+        let mut events = Vec::<PropOrSpread>::new();
+
+        for zip_attr in node.attrs.iter_mut().enumerate() {
+            let (index, attr) = zip_attr;
+
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &mut attr.name {
                     if is_custom {
@@ -271,11 +276,43 @@ impl VisitMut for JsxTransformer {
                         continue;
                     }
                 } else if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
-                    if namespaced.ns.sym == "xlink" && namespaced.name.sym == "href" {
+                    let ns = namespaced.ns.sym.as_str();
+
+                    match ns {
+                        "on" => {
+                            remove_indexes.push(index);
+                            events.push(prop(
+                                prop_key(namespaced.name.sym.as_str()),
+                                convert_jsx_attr_value(attr.value.as_ref(), &mut self.imports),
+                            ));
+                            continue;
+                        }
+                        "attr" => {
+                            continue;
+                        }
+                        "prop" => {
+                            continue;
+                        }
+                        _ => {}
+                    }
+
+                    if is_custom {
+                        continue;
+                    }
+
+                    if ns == "xlink" && namespaced.name.sym == "href" {
                         attr.name = JSXAttrName::from(namespaced.name.clone());
                     }
                 }
             }
+        }
+
+        for index in remove_indexes.into_iter().rev() {
+            node.attrs.remove(index);
+        }
+
+        if !events.is_empty() {
+            node.attrs.push(jsx_attr(EVENT_KEY, object_expr(events)));
         }
     }
 

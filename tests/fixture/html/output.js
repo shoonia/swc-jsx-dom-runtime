@@ -10,3 +10,5 @@ _jsx("a", { href: "https://example.com" });
 _jsx("input", { required: "", readonly: "", disabled: "", spellcheck: "true" });
 _jsx("div", { "aria-hidden": "true", "data-test": "true" });
 _jsx("div", { "aria-hidden": "false", "data-test": "true" });
+_jsx("div", { $: { click: () => console.log("clicked") } });
+_jsx("div", { $: { click: () => 1, mouseover: () => 2 } });
