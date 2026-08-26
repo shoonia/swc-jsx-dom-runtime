@@ -7,3 +7,4 @@
 <App kebab-case-prop="value" />;
 <App name:space-prop="value" />;
 <App camelCase={null} />;
+<Boo className="my-class" />;

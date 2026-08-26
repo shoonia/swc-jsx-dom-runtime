@@ -9,3 +9,4 @@
 <X.Y kebab-case-prop="value" />;
 <X.Y name:space-prop="value" />;
 <U.B camelCase={null} />;
+<Boo.Foo className="my-class" />;

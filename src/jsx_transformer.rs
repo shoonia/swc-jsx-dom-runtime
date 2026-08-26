@@ -225,6 +225,10 @@ impl VisitMut for JsxTransformer {
         for attr in node.attrs.iter_mut() {
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &mut attr.name {
+                    if is_custom {
+                        continue;
+                    }
+
                     if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
                         ident.sym = attr.to_string().into();
                         continue;

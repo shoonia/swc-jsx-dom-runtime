@@ -151,7 +151,6 @@ pub static HTML_DOM_ATTRIBUTES: LazyLock<HashMap<&'static str, &'static str>> =
 pub static SVG_DOM_ATTRIBUTES: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {
         HashMap::from([
-            ("className", "class"),
             ("accentHeight", "accent-height"),
             ("alignmentBaseline", "alignment-baseline"),
             ("arabicForm", "arabic-form"),
