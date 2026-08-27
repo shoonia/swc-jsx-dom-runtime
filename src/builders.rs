@@ -130,3 +130,23 @@ pub fn set_attr_call_expr(key: &str, value: Expr) -> Expr {
         vec![prop_expr(str_expr(key.into())), prop_expr(value)],
     )
 }
+
+pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
+    Expr::Assign(AssignExpr {
+        span: DUMMY_SP,
+        op: AssignOp::Assign,
+        left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
+            span: DUMMY_SP,
+            obj: Box::new(Expr::Ident(Ident::from(REF_PARAM_KEY))),
+            prop: if is_valid_prop_ident(key) {
+                MemberProp::Ident(IdentName::from(key))
+            } else {
+                MemberProp::Computed(ComputedPropName {
+                    span: DUMMY_SP,
+                    expr: Box::new(str_expr(key.into())),
+                })
+            },
+        })),
+        right: Box::new(value),
+    })
+}

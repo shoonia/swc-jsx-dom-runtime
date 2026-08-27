@@ -45,8 +45,8 @@ fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     }
 }
 
-fn convert_jsx_attr_value(value: Option<&JSXAttrValue>, imports: &mut ImportManager) -> Expr {
-    match value {
+fn convert_jsx_attr_value(attr: &JSXAttr, imports: &mut ImportManager) -> Expr {
+    match &attr.value {
         Some(value) => match value {
             JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
             JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
@@ -98,10 +98,7 @@ fn build_props(
                     }
                 };
 
-                Some(prop(
-                    prop_key(key),
-                    convert_jsx_attr_value(attr.value.as_ref(), imports),
-                ))
+                Some(prop(prop_key(key), convert_jsx_attr_value(attr, imports)))
             }
             JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
                 dot3_token: spread.dot3_token,
@@ -273,7 +270,7 @@ impl VisitMut for JsxTransformer {
                         }
                         continue;
                     }
-                } else if let JSXAttrName::JSXNamespacedName(namespaced) = &mut attr.name {
+                } else if let JSXAttrName::JSXNamespacedName(namespaced) = &attr.name {
                     let ns = namespaced.ns.sym.as_str();
 
                     match ns {
@@ -281,7 +278,7 @@ impl VisitMut for JsxTransformer {
                             remove_indexes.push(index);
                             events.push(prop(
                                 prop_key(namespaced.name.sym.as_str()),
-                                convert_jsx_attr_value(attr.value.as_ref(), &mut self.imports),
+                                convert_jsx_attr_value(attr, &mut self.imports),
                             ));
                             continue;
                         }
@@ -289,12 +286,16 @@ impl VisitMut for JsxTransformer {
                             remove_indexes.push(index);
                             refs.push(set_attr_call_expr(
                                 namespaced.name.sym.as_str(),
-                                convert_jsx_attr_value(attr.value.as_ref(), &mut self.imports),
+                                convert_jsx_attr_value(attr, &mut self.imports),
                             ));
                             continue;
                         }
                         "prop" => {
                             remove_indexes.push(index);
+                            refs.push(prop_assignment_expr(
+                                namespaced.name.sym.as_str(),
+                                convert_jsx_attr_value(attr, &mut self.imports),
+                            ));
                             continue;
                         }
                         _ => {}

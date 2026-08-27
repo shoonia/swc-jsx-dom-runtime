@@ -14,3 +14,6 @@ _jsx("div", { $: { click: () => console.log("clicked") } });
 _jsx("div", { $: { click: () => 1, mouseover: () => 2 } });
 _jsx("div", { ref: e => e.setAttribute("test", "value") });
 _jsx("div", { ref: e => { e.setAttribute("foo", "value"); e.setAttribute("bar", 1); } });
+_jsx("div", { ref: e => e.foo = {} });
+_jsx("div", { ref: e => { e.setAttribute("foo", 'hello'); e["bar-baz"] = {}; } });
+_jsx("div", { ref: e => { e.setAttribute("foo", data); e["bar-baz"] = data; } });

@@ -13,3 +13,6 @@
 <div on:click={() => 1} on:mouseover={() => 2} />;
 <div attr:test="value" />;
 <div attr:foo="value" attr:bar={1} />;
+<div prop:foo={{}}/>;
+<div attr:foo={'hello'} prop:bar-baz={{}} />;
+<div attr:foo={data} prop:bar-baz={data} />;
