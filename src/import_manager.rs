@@ -14,7 +14,7 @@ pub enum ImportName {
 }
 
 impl ImportName {
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Jsx => "jsx",
             Self::SvgNs => "svgNs",
