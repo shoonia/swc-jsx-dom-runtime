@@ -10,6 +10,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
         JSXObject::Ident(ident) => Expr::Ident(ident),
         JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
+        _ => unreachable!("unsupported JSX object"),
     };
 
     Expr::Member(MemberExpr {
@@ -27,6 +28,7 @@ fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
     match &container.expr {
         JSXExpr::JSXEmptyExpr(_) => null_expr(),
         JSXExpr::Expr(expr) => expr.as_ref().clone(),
+        _ => unreachable!("unsupported JSX expression"),
     }
 }
 
@@ -52,6 +54,7 @@ fn convert_jsx_attr_value(attr: &JSXAttr, imports: &mut ImportManager) -> Expr {
             JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
             JSXAttrValue::JSXElement(element) => transform_element(element.as_ref(), imports),
             JSXAttrValue::JSXFragment(fragment) => transform_fragment(fragment, imports),
+            _ => unreachable!("unsupported JSX attribute value"),
         },
         None => bool_expr(true),
     }
@@ -79,6 +82,7 @@ fn build_children(
             JSXElementChild::JSXFragment(fragment) => {
                 Some(Some(prop_expr(transform_fragment(fragment, imports))))
             }
+            _ => None,
         })
         .collect()
 }
@@ -96,6 +100,7 @@ fn build_props(
                     JSXAttrName::JSXNamespacedName(namespaced) => {
                         &convert_jsx_namespaced_name(namespaced)
                     }
+                    _ => unreachable!("unsupported JSX attribute name"),
                 };
 
                 Some(prop(prop_key(key), convert_jsx_attr_value(attr, imports)))
@@ -104,6 +109,7 @@ fn build_props(
                 dot3_token: spread.dot3_token,
                 expr: spread.expr.clone(),
             })),
+            _ => None,
         })
         .collect()
 }
@@ -167,18 +173,18 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             }
             call_expr(imports.add(ImportName::Jsx), args)
         }
+        _ => unreachable!("unsupported JSX element name"),
     }
 }
 
-pub struct ParentNode {
-    pub is_html: bool,
-    pub is_svg: bool,
-    pub is_mathml: bool,
+struct ParentNode {
+    is_svg: bool,
+    is_mathml: bool,
 }
 
 pub struct JsxTransformer {
-    pub imports: ImportManager,
-    pub parent_node: ParentNode,
+    imports: ImportManager,
+    parent_node: ParentNode,
 }
 
 impl JsxTransformer {
@@ -186,7 +192,6 @@ impl JsxTransformer {
         Self {
             imports: ImportManager::new(),
             parent_node: ParentNode {
-                is_html: false,
                 is_svg: false,
                 is_mathml: false,
             },
@@ -210,6 +215,7 @@ impl VisitMut for JsxTransformer {
                 }
                 ident.sym.as_str()
             }
+            _ => unreachable!("unsupported JSX element name"),
         };
 
         let is_html = is_html_tag(tag_name);
@@ -353,11 +359,7 @@ impl VisitMut for JsxTransformer {
                 .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
         }
 
-        self.parent_node = ParentNode {
-            is_html,
-            is_svg,
-            is_mathml,
-        };
+        self.parent_node = ParentNode { is_svg, is_mathml };
     }
 
     fn visit_mut_expr(&mut self, node: &mut Expr) {

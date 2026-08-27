@@ -7,22 +7,22 @@ pub enum ImportName {
     Jsx,
     SvgNs,
     MathmlNs,
-    SetStyle,
-    SetDataset,
-    SetSignalish,
-    SetAttributes,
+    // SetStyle,
+    // SetDataset,
+    // SetSignalish,
+    // SetAttributes,
 }
 
 impl ImportName {
-    pub fn as_str(&self) -> &'static str {
+    fn as_str(&self) -> &'static str {
         match self {
             Self::Jsx => "jsx",
             Self::SvgNs => "svgNs",
             Self::MathmlNs => "mathmlNs",
-            Self::SetStyle => "setStyle",
-            Self::SetDataset => "setDataset",
-            Self::SetSignalish => "setSignalish",
-            Self::SetAttributes => "setAttributes",
+            // Self::SetStyle => "setStyle",
+            // Self::SetDataset => "setDataset",
+            // Self::SetSignalish => "setSignalish",
+            // Self::SetAttributes => "setAttributes",
         }
     }
 }

@@ -7,21 +7,24 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [profile.release]
+opt-level = "z"
 lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
 
 [dependencies]
 serde = "1"
 swc_core = { version = "77.0.*", features = [
+  "ecma_ast",
+  "ecma_visit",
   "ecma_utils",
   "ecma_plugin_transform",
-  "ecma_parser",
-  "ecma_codegen",
-  "testing_transform",
 ] }
 
 [dev-dependencies]
 testing = "27.0.0"
-
-# .cargo/config.toml defines few alias to build plugin.
-# cargo build-wasip1 generates wasm32-wasip1 binary
-# cargo build-wasm32 generates wasm32-unknown-unknown binary.
+swc_core = { version = "77.0.*", features = [
+  "ecma_parser",
+  "testing_transform",
+] }
