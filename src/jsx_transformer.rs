@@ -134,12 +134,6 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                     vec![prop_expr(object_expr(props))],
                 )
             } else {
-                if is_svg_tag(&ident.sym) {
-                    props.push(prop(prop_ident(NS_KEY), imports.add(ImportName::SvgNs)));
-                } else if is_mathml_tag(&ident.sym) {
-                    props.push(prop(prop_ident(NS_KEY), imports.add(ImportName::MathmlNs)));
-                }
-
                 let mut args = vec![
                     prop_expr(str_expr(ident.sym.clone().into())),
                     prop_expr(object_expr(props)),
@@ -176,14 +170,26 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
     }
 }
 
+pub struct ParentNode {
+    pub is_html: bool,
+    pub is_svg: bool,
+    pub is_mathml: bool,
+}
+
 pub struct JsxTransformer {
     pub imports: ImportManager,
+    pub parent_node: ParentNode,
 }
 
 impl JsxTransformer {
     pub fn new() -> Self {
         Self {
             imports: ImportManager::new(),
+            parent_node: ParentNode {
+                is_html: false,
+                is_svg: false,
+                is_mathml: false,
+            },
         }
     }
 }
@@ -195,10 +201,6 @@ impl VisitMut for JsxTransformer {
     }
 
     fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
-        if node.attrs.is_empty() {
-            return;
-        }
-
         let tag_name = match &node.name {
             JSXElementName::JSXMemberExpr(_) => return,
             JSXElementName::JSXNamespacedName(_) => return,
@@ -210,9 +212,10 @@ impl VisitMut for JsxTransformer {
             }
         };
 
-        let is_svg = is_svg_tag(tag_name);
         let is_html = is_html_tag(tag_name);
-        let is_standard = is_html || is_svg || is_mathml_tag(tag_name);
+        let is_svg = is_svg_tag(tag_name);
+        let is_mathml = is_mathml_tag(tag_name);
+        let is_standard = is_html || is_svg || is_mathml;
         let is_custom = !is_standard && tag_name.contains('-');
 
         if !(is_standard || is_custom) {
@@ -330,6 +333,20 @@ impl VisitMut for JsxTransformer {
         if !refs.is_empty() {
             node.attrs.push(jsx_attr(REF_KEY, create_ref_cb(refs)));
         }
+
+        if is_svg || self.parent_node.is_svg {
+            node.attrs
+                .push(jsx_attr(NS_KEY, self.imports.add(ImportName::SvgNs)));
+        } else if is_mathml || self.parent_node.is_mathml {
+            node.attrs
+                .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
+        }
+
+        self.parent_node = ParentNode {
+            is_html,
+            is_svg,
+            is_mathml,
+        };
     }
 
     fn visit_mut_expr(&mut self, node: &mut Expr) {
