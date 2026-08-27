@@ -19,7 +19,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     })
 }
 
-fn convert_jsx_namespaced_name(jsx_namespaced: JSXNamespacedName) -> String {
+fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
     format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name) as String
 }
 
@@ -94,7 +94,7 @@ fn build_props(
                 let key = match &attr.name {
                     JSXAttrName::Ident(ident) => ident.sym.as_str(),
                     JSXAttrName::JSXNamespacedName(namespaced) => {
-                        &convert_jsx_namespaced_name(namespaced.clone())
+                        &convert_jsx_namespaced_name(namespaced)
                     }
                 };
 
@@ -158,7 +158,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
         }
         JSXElementName::JSXNamespacedName(name) => {
             let mut args = vec![
-                prop_expr(str_expr(convert_jsx_namespaced_name(name.clone()).into())),
+                prop_expr(str_expr(convert_jsx_namespaced_name(name).into())),
                 prop_expr(object_expr(props)),
             ];
 
@@ -230,47 +230,58 @@ impl VisitMut for JsxTransformer {
             let (index, attr) = zip_attr;
 
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
-                if let JSXAttrName::Ident(ident) = &mut attr.name {
+                if let JSXAttrName::Ident(ident) = &attr.name {
                     if is_custom {
                         continue;
                     }
 
-                    if let Some(attr) = HTML_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
-                        ident.sym = attr.to_string().into();
+                    let attr_name = ident.sym.as_str();
+
+                    if let Some(a) = HTML_DOM_ATTRIBUTES.get(attr_name) {
+                        attr.name = jsx_attr_name(a);
                         continue;
                     }
 
                     if is_svg {
-                        if let Some(attr) = SVG_DOM_ATTRIBUTES.get(ident.sym.as_str()) {
-                            ident.sym = attr.to_string().into();
+                        if let Some(a) = SVG_DOM_ATTRIBUTES.get(attr_name) {
+                            attr.name = jsx_attr_name(a);
                         }
                         continue;
                     }
 
-                    let attr_name = ident.sym.to_lowercase();
+                    let name = attr_name.to_lowercase();
 
                     if is_html {
-                        ident.sym = attr_name.clone().into();
+                        attr.name = jsx_attr_name(&name);
                     }
 
-                    if is_bool_attr(&attr_name) {
+                    if is_bool_attr(&name) {
                         if attr.value.is_none() {
-                            attr.value = Some(attr_val_str(""));
+                            attr.value = jsx_attr_val_str("");
                         }
                         continue;
                     }
 
-                    if is_enumerated_attr(&attr_name) {
+                    if is_enumerated_attr(&name) {
                         if attr.value.is_none() {
-                            attr.value = Some(attr_val_str("true"));
+                            attr.value = jsx_attr_val_str("true");
                         } else if let Some(JSXAttrValue::JSXExprContainer(container)) = &attr.value
                         {
                             if let JSXExpr::Expr(expr) = &container.expr {
                                 if let Expr::Lit(Lit::Bool(val)) = expr.as_ref() {
-                                    attr.value = Some(attr_val_str(&val.value.to_string()));
+                                    attr.value = jsx_attr_val_str(&val.value.to_string());
                                 }
                             }
                         }
+                        continue;
+                    }
+
+                    if name.starts_with("on") {
+                        remove_indexes.push(index);
+                        refs.push(prop_assignment_expr(
+                            &name,
+                            convert_jsx_attr_value(attr, &mut self.imports),
+                        ));
                         continue;
                     }
                 } else if let JSXAttrName::JSXNamespacedName(namespaced) = &attr.name {

@@ -74,15 +74,20 @@ pub fn prop(key: PropName, value: Expr) -> PropOrSpread {
 }
 
 #[inline(always)]
-pub fn attr_val_str(value: &str) -> JSXAttrValue {
-    JSXAttrValue::Str(Str::from(value))
+pub fn jsx_attr_val_str(value: &str) -> Option<JSXAttrValue> {
+    Some(JSXAttrValue::Str(Str::from(value)))
+}
+
+#[inline(always)]
+pub fn jsx_attr_name(name: &str) -> JSXAttrName {
+    JSXAttrName::Ident(IdentName::from(name))
 }
 
 #[inline(always)]
 pub fn jsx_attr(name: &str, value: Expr) -> JSXAttrOrSpread {
     JSXAttrOrSpread::JSXAttr(JSXAttr {
         span: DUMMY_SP,
-        name: JSXAttrName::Ident(IdentName::from(name)),
+        name: jsx_attr_name(name),
         value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
             span: DUMMY_SP,
             expr: JSXExpr::Expr(Box::new(value)),

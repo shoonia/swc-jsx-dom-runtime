@@ -17,3 +17,4 @@
 <div prop:foo={{}}/>;
 <div attr:foo={'hello'} prop:bar-baz={{}} />;
 <div attr:foo={data} prop:bar-baz={data} />;
+<button type="submit" onclick={handleClick} />;

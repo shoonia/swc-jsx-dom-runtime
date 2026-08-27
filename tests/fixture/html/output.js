@@ -18,3 +18,4 @@ _jsx("div", { ref: e => { e.setAttribute("foo", "value"); e.setAttribute("bar", 
 _jsx("div", { ref: e => e.foo = {} });
 _jsx("div", { ref: e => { e.setAttribute("foo", 'hello'); e["bar-baz"] = {}; } });
 _jsx("div", { ref: e => { e.setAttribute("foo", data); e["bar-baz"] = data; } });
+_jsx("button", { type: "submit", ref: e => e.onclick = handleClick });
