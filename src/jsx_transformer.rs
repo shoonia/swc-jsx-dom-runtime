@@ -275,11 +275,18 @@ impl VisitMut for JsxTransformer {
 
                     match ns {
                         "on" => {
+                            let ev_name = namespaced.name.sym.as_str();
+                            let lc_name = &ev_name.to_lowercase();
+
+                            let name = if event_types(lc_name) {
+                                prop_ident(lc_name)
+                            } else {
+                                prop_key(ev_name)
+                            };
+
                             remove_indexes.push(index);
-                            events.push(prop(
-                                prop_key(namespaced.name.sym.as_str()),
-                                convert_jsx_attr_value(attr, &mut self.imports),
-                            ));
+                            events
+                                .push(prop(name, convert_jsx_attr_value(attr, &mut self.imports)));
                             continue;
                         }
                         "attr" => {

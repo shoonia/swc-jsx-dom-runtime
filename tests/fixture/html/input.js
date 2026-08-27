@@ -10,7 +10,8 @@
 <div aria-hidden data-test />;
 <div aria-hidden={false} data-test={true} />;
 <div on:click={() => console.log("clicked")} />;
-<div on:click={() => 1} on:mouseover={() => 2} />;
+<div on:click={() => 1} on:mouseOver={() => 2} />;
+<input type="text" on:focusIn={{ handleEvent }} />;
 <div attr:test="value" />;
 <div attr:foo="value" attr:bar={1} />;
 <div prop:foo={{}}/>;
