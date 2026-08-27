@@ -224,6 +224,7 @@ impl VisitMut for JsxTransformer {
 
         let mut remove_indexes = Vec::<usize>::new();
         let mut events = Vec::<PropOrSpread>::new();
+        let mut refs = Vec::<Expr>::new();
 
         for zip_attr in node.attrs.iter_mut().enumerate() {
             let (index, attr) = zip_attr;
@@ -286,6 +287,10 @@ impl VisitMut for JsxTransformer {
                         }
                         "attr" => {
                             remove_indexes.push(index);
+                            refs.push(set_attr_call_expr(
+                                namespaced.name.sym.as_str(),
+                                convert_jsx_attr_value(attr.value.as_ref(), &mut self.imports),
+                            ));
                             continue;
                         }
                         "prop" => {
@@ -312,6 +317,10 @@ impl VisitMut for JsxTransformer {
 
         if !events.is_empty() {
             node.attrs.push(jsx_attr(EVENT_KEY, object_expr(events)));
+        }
+
+        if !refs.is_empty() {
+            node.attrs.push(jsx_attr(REF_KEY, create_ref_cb(refs)));
         }
     }
 

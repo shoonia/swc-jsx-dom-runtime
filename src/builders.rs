@@ -1,3 +1,4 @@
+use crate::consts::*;
 use swc_core::atoms::Wtf8Atom;
 use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
@@ -87,4 +88,45 @@ pub fn jsx_attr(name: &str, value: Expr) -> JSXAttrOrSpread {
             expr: JSXExpr::Expr(Box::new(value)),
         })),
     })
+}
+
+pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
+    let body = if refs.len() == 1 {
+        ArrowFunctionBody::Expr(Box::new(refs[0].clone()))
+    } else {
+        ArrowFunctionBody::FunctionBody(FunctionBody {
+            span: DUMMY_SP,
+            stmts: refs
+                .into_iter()
+                .map(|expr| {
+                    Stmt::Expr(ExprStmt {
+                        span: DUMMY_SP,
+                        expr: Box::new(expr),
+                    })
+                })
+                .collect(),
+        })
+    };
+
+    Expr::Arrow(ArrowExpr {
+        span: DUMMY_SP,
+        ctxt: SyntaxContext::empty(),
+        params: vec![Pat::Ident(BindingIdent::from(Ident::from(REF_PARAM_KEY)))],
+        body: Box::new(body),
+        is_async: false,
+        is_generator: false,
+        type_params: None,
+        return_type: None,
+    })
+}
+
+pub fn set_attr_call_expr(key: &str, value: Expr) -> Expr {
+    call_expr(
+        Expr::Member(MemberExpr {
+            span: DUMMY_SP,
+            obj: Box::new(Expr::Ident(Ident::from(REF_PARAM_KEY))),
+            prop: MemberProp::Ident(IdentName::from("setAttribute")),
+        }),
+        vec![prop_expr(str_expr(key.into())), prop_expr(value)],
+    )
 }

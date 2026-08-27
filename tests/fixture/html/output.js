@@ -12,3 +12,5 @@ _jsx("div", { "aria-hidden": "true", "data-test": "true" });
 _jsx("div", { "aria-hidden": "false", "data-test": "true" });
 _jsx("div", { $: { click: () => console.log("clicked") } });
 _jsx("div", { $: { click: () => 1, mouseover: () => 2 } });
+_jsx("div", { ref: e => e.setAttribute("test", "value") });
+_jsx("div", { ref: e => { e.setAttribute("foo", "value"); e.setAttribute("bar", 1); } });

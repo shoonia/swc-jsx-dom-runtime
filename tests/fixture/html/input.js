@@ -11,3 +11,5 @@
 <div aria-hidden={false} data-test={true} />;
 <div on:click={() => console.log("clicked")} />;
 <div on:click={() => 1} on:mouseover={() => 2} />;
+<div attr:test="value" />;
+<div attr:foo="value" attr:bar={1} />;
