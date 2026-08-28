@@ -68,138 +68,6 @@ fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     }
 }
 
-fn convert_jsx_attr_value<C: Comments>(plugin: &mut JsxTransformer<C>, attr: &JSXAttr) -> Expr {
-    match &attr.value {
-        Some(value) => match value {
-            JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
-            JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
-            JSXAttrValue::JSXElement(element) => transform_element(plugin, element.as_ref()),
-            JSXAttrValue::JSXFragment(fragment) => transform_fragment(plugin, fragment),
-            _ => unsafe { unreachable_unchecked() },
-        },
-        None => bool_expr(true),
-    }
-}
-
-fn build_children<C: Comments>(
-    plugin: &mut JsxTransformer<C>,
-    children: &Vec<JSXElementChild>,
-) -> Vec<Option<ExprOrSpread>> {
-    children
-        .iter()
-        .filter_map(|child| match child {
-            JSXElementChild::JSXExprContainer(container) => {
-                Some(Some(prop_expr(convert_jsx_container(container))))
-            }
-            JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
-                spread: Some(spread.span),
-                expr: spread.expr.clone(),
-            })),
-            JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
-            JSXElementChild::JSXElement(element) => {
-                Some(Some(prop_expr(transform_element(plugin, element.as_ref()))))
-            }
-            JSXElementChild::JSXFragment(fragment) => {
-                Some(Some(prop_expr(transform_fragment(plugin, fragment))))
-            }
-            _ => None,
-        })
-        .collect()
-}
-
-fn build_props<C: Comments>(
-    plugin: &mut JsxTransformer<C>,
-    attributes: &Vec<JSXAttrOrSpread>,
-) -> Vec<PropOrSpread> {
-    attributes
-        .iter()
-        .filter_map(|attr| match attr {
-            JSXAttrOrSpread::JSXAttr(attr) => {
-                let key = match &attr.name {
-                    JSXAttrName::Ident(ident) => ident.sym.as_str(),
-                    JSXAttrName::JSXNamespacedName(namespaced) => {
-                        &convert_jsx_namespaced_name(namespaced)
-                    }
-                    _ => unsafe { unreachable_unchecked() },
-                };
-
-                Some(prop(prop_key(key), convert_jsx_attr_value(plugin, attr)))
-            }
-            JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
-                dot3_token: spread.dot3_token,
-                expr: spread.expr.clone(),
-            })),
-            _ => None,
-        })
-        .collect()
-}
-
-fn transform_fragment<C: Comments>(plugin: &mut JsxTransformer<C>, fragment: &JSXFragment) -> Expr {
-    let elems = build_children(plugin, &fragment.children);
-
-    if elems.is_empty() {
-        null_expr()
-    } else {
-        children_expr(elems)
-    }
-}
-
-fn transform_element<C: Comments>(plugin: &mut JsxTransformer<C>, element: &JSXElement) -> Expr {
-    let children = build_children(plugin, &element.children);
-    let mut props = build_props(plugin, &element.opening.attrs);
-
-    match &element.opening.name {
-        JSXElementName::Ident(ident) => {
-            if is_fn_component(ident) {
-                if !children.is_empty() {
-                    props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
-                }
-
-                call_expr(
-                    Expr::Ident(ident.clone()),
-                    vec![prop_expr(object_expr(props))],
-                )
-            } else {
-                let mut args = vec![
-                    prop_expr(str_expr(ident.sym.clone().into())),
-                    prop_expr(object_expr(props)),
-                ];
-
-                if !children.is_empty() {
-                    args.push(prop_expr(children_expr(children)));
-                }
-
-                plugin.add_pure_comment(element.span);
-                call_expr(plugin.imports.add(ImportName::Jsx), args)
-            }
-        }
-        JSXElementName::JSXMemberExpr(jsx_memeber) => {
-            if !children.is_empty() {
-                props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
-            }
-
-            call_expr(
-                convert_jsx_member(jsx_memeber.clone()),
-                vec![prop_expr(object_expr(props))],
-            )
-        }
-        JSXElementName::JSXNamespacedName(name) => {
-            let mut args = vec![
-                prop_expr(str_expr(convert_jsx_namespaced_name(name).into())),
-                prop_expr(object_expr(props)),
-            ];
-
-            if !children.is_empty() {
-                args.push(prop_expr(children_expr(children)));
-            }
-
-            plugin.add_pure_comment(element.span);
-            call_expr(plugin.imports.add(ImportName::Jsx), args)
-        }
-        _ => unsafe { unreachable_unchecked() },
-    }
-}
-
 struct ParentNode {
     is_svg: bool,
     is_mathml: bool,
@@ -227,6 +95,136 @@ impl<C: Comments> JsxTransformer<C> {
         if let Some(comments) = self.comments.as_ref() {
             comments.add_pure_comment(span.lo);
         }
+    }
+
+    fn build_props(&mut self, attributes: &Vec<JSXAttrOrSpread>) -> Vec<PropOrSpread> {
+        attributes
+            .iter()
+            .filter_map(|attr| match attr {
+                JSXAttrOrSpread::JSXAttr(attr) => {
+                    let key = match &attr.name {
+                        JSXAttrName::Ident(ident) => ident.sym.as_str(),
+                        JSXAttrName::JSXNamespacedName(namespaced) => {
+                            &convert_jsx_namespaced_name(namespaced)
+                        }
+                        _ => unsafe { unreachable_unchecked() },
+                    };
+
+                    Some(prop(prop_key(key), self.convert_jsx_attr_value(attr)))
+                }
+                JSXAttrOrSpread::SpreadElement(spread) => {
+                    Some(PropOrSpread::Spread(SpreadElement {
+                        dot3_token: spread.dot3_token,
+                        expr: spread.expr.clone(),
+                    }))
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn transform_fragment(&mut self, fragment: &JSXFragment) -> Expr {
+        let elems = self.build_children(&fragment.children);
+
+        if elems.is_empty() {
+            null_expr()
+        } else {
+            children_expr(elems)
+        }
+    }
+
+    fn transform_element(&mut self, element: &JSXElement) -> Expr {
+        let children = self.build_children(&element.children);
+        let mut props = self.build_props(&element.opening.attrs);
+
+        match &element.opening.name {
+            JSXElementName::Ident(ident) => {
+                if is_fn_component(ident) {
+                    if !children.is_empty() {
+                        props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
+                    }
+
+                    call_expr(
+                        Expr::Ident(ident.clone()),
+                        vec![prop_expr(object_expr(props))],
+                    )
+                } else {
+                    let mut args = vec![
+                        prop_expr(str_expr(ident.sym.clone().into())),
+                        prop_expr(object_expr(props)),
+                    ];
+
+                    if !children.is_empty() {
+                        args.push(prop_expr(children_expr(children)));
+                    }
+
+                    self.add_pure_comment(element.span);
+                    call_expr(self.imports.add(ImportName::Jsx), args)
+                }
+            }
+            JSXElementName::JSXMemberExpr(jsx_memeber) => {
+                if !children.is_empty() {
+                    props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
+                }
+
+                call_expr(
+                    convert_jsx_member(jsx_memeber.clone()),
+                    vec![prop_expr(object_expr(props))],
+                )
+            }
+            JSXElementName::JSXNamespacedName(name) => {
+                let mut args = vec![
+                    prop_expr(str_expr(convert_jsx_namespaced_name(name).into())),
+                    prop_expr(object_expr(props)),
+                ];
+
+                if !children.is_empty() {
+                    args.push(prop_expr(children_expr(children)));
+                }
+
+                self.add_pure_comment(element.span);
+                call_expr(self.imports.add(ImportName::Jsx), args)
+            }
+            _ => unsafe { unreachable_unchecked() },
+        }
+    }
+
+    fn convert_jsx_attr_value(&mut self, attr: &JSXAttr) -> Expr {
+        match &attr.value {
+            Some(value) => match value {
+                JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
+                JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
+                JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
+                JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
+                _ => unsafe { unreachable_unchecked() },
+            },
+            None => bool_expr(true),
+        }
+    }
+
+    fn build_children(&mut self, children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
+        children
+            .iter()
+            .filter_map(|child| match child {
+                JSXElementChild::JSXExprContainer(container) => {
+                    Some(Some(prop_expr(convert_jsx_container(container))))
+                }
+                JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
+                    spread: Some(spread.span),
+                    expr: spread.expr.clone(),
+                })),
+                JSXElementChild::JSXText(text) => {
+                    Some(Some(prop_expr(str_expr(text.value.clone()))))
+                }
+                JSXElementChild::JSXElement(element) => {
+                    Some(Some(prop_expr(self.transform_element(element.as_ref()))))
+                }
+                JSXElementChild::JSXFragment(fragment) => {
+                    Some(Some(prop_expr(self.transform_fragment(fragment))))
+                }
+                _ => None,
+            })
+            .collect()
     }
 }
 
@@ -271,7 +269,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetStyle),
-                                convert_jsx_attr_value(self, attr),
+                                self.convert_jsx_attr_value(attr),
                             ));
                             continue;
                         }
@@ -279,7 +277,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetDataset),
-                                convert_jsx_attr_value(self, attr),
+                                self.convert_jsx_attr_value(attr),
                             ));
                             continue;
                         }
@@ -287,7 +285,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetAttributes),
-                                convert_jsx_attr_value(self, attr),
+                                self.convert_jsx_attr_value(attr),
                             ));
                             continue;
                         }
@@ -341,7 +339,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                         remove_indexes.push(index);
                         refs.push(prop_assignment_expr(
                             &name,
-                            convert_jsx_attr_value(self, attr),
+                            self.convert_jsx_attr_value(attr),
                         ));
                         continue;
                     }
@@ -360,12 +358,12 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             };
 
                             remove_indexes.push(index);
-                            events.push(prop(name, convert_jsx_attr_value(self, attr)));
+                            events.push(prop(name, self.convert_jsx_attr_value(attr)));
                             continue;
                         }
                         "attr" => {
                             remove_indexes.push(index);
-                            let value = convert_jsx_attr_value(self, attr);
+                            let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
@@ -382,7 +380,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                         }
                         "prop" => {
                             remove_indexes.push(index);
-                            let value = convert_jsx_attr_value(self, attr);
+                            let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
@@ -438,8 +436,8 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
         node.visit_mut_children_with(self);
 
         let expr = match node {
-            Expr::JSXFragment(fragment) => transform_fragment(self, fragment),
-            Expr::JSXElement(element) => transform_element(self, element.as_ref()),
+            Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
+            Expr::JSXElement(element) => self.transform_element(element.as_ref()),
             _ => return,
         };
 
