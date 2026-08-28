@@ -20,7 +20,7 @@ fn jsx_transformer_fixture(input: PathBuf) {
 
     test_fixture(
         syntax(),
-        &|_| visit_mut_pass(JsxTransformer::new()),
+        &|meta| visit_mut_pass(JsxTransformer::new(Some(meta.comments.clone()))),
         &input,
         &output,
         FixtureTestConfig {

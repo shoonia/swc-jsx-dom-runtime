@@ -4,6 +4,7 @@ use crate::consts::*;
 use crate::import_manager::*;
 use core::hint::unreachable_unchecked;
 use std::vec;
+use swc_core::common::{comments::Comments, Span};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
@@ -67,22 +68,22 @@ fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     }
 }
 
-fn convert_jsx_attr_value(attr: &JSXAttr, imports: &mut ImportManager) -> Expr {
+fn convert_jsx_attr_value<C: Comments>(plugin: &mut JsxTransformer<C>, attr: &JSXAttr) -> Expr {
     match &attr.value {
         Some(value) => match value {
             JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
             JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
-            JSXAttrValue::JSXElement(element) => transform_element(element.as_ref(), imports),
-            JSXAttrValue::JSXFragment(fragment) => transform_fragment(fragment, imports),
+            JSXAttrValue::JSXElement(element) => transform_element(plugin, element.as_ref()),
+            JSXAttrValue::JSXFragment(fragment) => transform_fragment(plugin, fragment),
             _ => unsafe { unreachable_unchecked() },
         },
         None => bool_expr(true),
     }
 }
 
-fn build_children(
+fn build_children<C: Comments>(
+    plugin: &mut JsxTransformer<C>,
     children: &Vec<JSXElementChild>,
-    imports: &mut ImportManager,
 ) -> Vec<Option<ExprOrSpread>> {
     children
         .iter()
@@ -95,21 +96,20 @@ fn build_children(
                 expr: spread.expr.clone(),
             })),
             JSXElementChild::JSXText(text) => Some(Some(prop_expr(str_expr(text.value.clone())))),
-            JSXElementChild::JSXElement(element) => Some(Some(prop_expr(transform_element(
-                element.as_ref(),
-                imports,
-            )))),
+            JSXElementChild::JSXElement(element) => {
+                Some(Some(prop_expr(transform_element(plugin, element.as_ref()))))
+            }
             JSXElementChild::JSXFragment(fragment) => {
-                Some(Some(prop_expr(transform_fragment(fragment, imports))))
+                Some(Some(prop_expr(transform_fragment(plugin, fragment))))
             }
             _ => None,
         })
         .collect()
 }
 
-fn build_props(
+fn build_props<C: Comments>(
+    plugin: &mut JsxTransformer<C>,
     attributes: &Vec<JSXAttrOrSpread>,
-    imports: &mut ImportManager,
 ) -> Vec<PropOrSpread> {
     attributes
         .iter()
@@ -123,7 +123,7 @@ fn build_props(
                     _ => unsafe { unreachable_unchecked() },
                 };
 
-                Some(prop(prop_key(key), convert_jsx_attr_value(attr, imports)))
+                Some(prop(prop_key(key), convert_jsx_attr_value(plugin, attr)))
             }
             JSXAttrOrSpread::SpreadElement(spread) => Some(PropOrSpread::Spread(SpreadElement {
                 dot3_token: spread.dot3_token,
@@ -134,8 +134,8 @@ fn build_props(
         .collect()
 }
 
-fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Expr {
-    let elems = build_children(&fragment.children, imports);
+fn transform_fragment<C: Comments>(plugin: &mut JsxTransformer<C>, fragment: &JSXFragment) -> Expr {
+    let elems = build_children(plugin, &fragment.children);
 
     if elems.is_empty() {
         null_expr()
@@ -144,9 +144,9 @@ fn transform_fragment(fragment: &JSXFragment, imports: &mut ImportManager) -> Ex
     }
 }
 
-fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr {
-    let children = build_children(&element.children, imports);
-    let mut props = build_props(&element.opening.attrs, imports);
+fn transform_element<C: Comments>(plugin: &mut JsxTransformer<C>, element: &JSXElement) -> Expr {
+    let children = build_children(plugin, &element.children);
+    let mut props = build_props(plugin, &element.opening.attrs);
 
     match &element.opening.name {
         JSXElementName::Ident(ident) => {
@@ -169,7 +169,8 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
                     args.push(prop_expr(children_expr(children)));
                 }
 
-                call_expr(imports.add(ImportName::Jsx), args)
+                plugin.add_pure_comment(element.span);
+                call_expr(plugin.imports.add(ImportName::Jsx), args)
             }
         }
         JSXElementName::JSXMemberExpr(jsx_memeber) => {
@@ -191,7 +192,9 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             if !children.is_empty() {
                 args.push(prop_expr(children_expr(children)));
             }
-            call_expr(imports.add(ImportName::Jsx), args)
+
+            plugin.add_pure_comment(element.span);
+            call_expr(plugin.imports.add(ImportName::Jsx), args)
         }
         _ => unsafe { unreachable_unchecked() },
     }
@@ -202,14 +205,16 @@ struct ParentNode {
     is_mathml: bool,
 }
 
-pub struct JsxTransformer {
+pub struct JsxTransformer<C: Comments> {
+    comments: Option<C>,
     imports: ImportManager,
     parent_node: ParentNode,
 }
 
-impl JsxTransformer {
-    pub fn new() -> Self {
+impl<C: Comments> JsxTransformer<C> {
+    pub fn new(comments: Option<C>) -> Self {
         Self {
+            comments,
             imports: ImportManager::new(),
             parent_node: ParentNode {
                 is_svg: false,
@@ -217,9 +222,15 @@ impl JsxTransformer {
             },
         }
     }
+
+    fn add_pure_comment(&self, span: Span) {
+        if let Some(comments) = self.comments.as_ref() {
+            comments.add_pure_comment(span.lo);
+        }
+    }
 }
 
-impl VisitMut for JsxTransformer {
+impl<C: Comments> VisitMut for JsxTransformer<C> {
     fn visit_mut_module(&mut self, module: &mut Module) {
         module.visit_mut_children_with(self);
         self.imports.inject_into_module(module);
@@ -260,7 +271,7 @@ impl VisitMut for JsxTransformer {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetStyle),
-                                convert_jsx_attr_value(attr, &mut self.imports),
+                                convert_jsx_attr_value(self, attr),
                             ));
                             continue;
                         }
@@ -268,7 +279,7 @@ impl VisitMut for JsxTransformer {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetDataset),
-                                convert_jsx_attr_value(attr, &mut self.imports),
+                                convert_jsx_attr_value(self, attr),
                             ));
                             continue;
                         }
@@ -276,7 +287,7 @@ impl VisitMut for JsxTransformer {
                             remove_indexes.push(index);
                             refs.push(set_utility(
                                 self.imports.add(ImportName::SetAttributes),
-                                convert_jsx_attr_value(attr, &mut self.imports),
+                                convert_jsx_attr_value(self, attr),
                             ));
                             continue;
                         }
@@ -330,7 +341,7 @@ impl VisitMut for JsxTransformer {
                         remove_indexes.push(index);
                         refs.push(prop_assignment_expr(
                             &name,
-                            convert_jsx_attr_value(attr, &mut self.imports),
+                            convert_jsx_attr_value(self, attr),
                         ));
                         continue;
                     }
@@ -349,13 +360,12 @@ impl VisitMut for JsxTransformer {
                             };
 
                             remove_indexes.push(index);
-                            events
-                                .push(prop(name, convert_jsx_attr_value(attr, &mut self.imports)));
+                            events.push(prop(name, convert_jsx_attr_value(self, attr)));
                             continue;
                         }
                         "attr" => {
                             remove_indexes.push(index);
-                            let value = convert_jsx_attr_value(attr, &mut self.imports);
+                            let value = convert_jsx_attr_value(self, attr);
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
@@ -372,7 +382,7 @@ impl VisitMut for JsxTransformer {
                         }
                         "prop" => {
                             remove_indexes.push(index);
-                            let value = convert_jsx_attr_value(attr, &mut self.imports);
+                            let value = convert_jsx_attr_value(self, attr);
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
@@ -428,8 +438,8 @@ impl VisitMut for JsxTransformer {
         node.visit_mut_children_with(self);
 
         let expr = match node {
-            Expr::JSXFragment(fragment) => transform_fragment(fragment, &mut self.imports),
-            Expr::JSXElement(element) => transform_element(element.as_ref(), &mut self.imports),
+            Expr::JSXFragment(fragment) => transform_fragment(self, fragment),
+            Expr::JSXElement(element) => transform_element(self, element.as_ref()),
             _ => return,
         };
 

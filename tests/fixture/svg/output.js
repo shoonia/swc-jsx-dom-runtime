@@ -1,7 +1,7 @@
 import { svgNs as _svgNs, jsx as _jsx } from "jsx-dom-runtime";
-_jsx("svg", { _: _svgNs });
-_jsx("svg", { "font-family": "Arial", _: _svgNs });
-_jsx("feTurbulence", { baseFrequency: "0.025", _: _svgNs });
-_jsx("path", { class: "my-class", _: _svgNs });
-_jsx("svg", { _: _svgNs }, _jsx("a", { _: _svgNs }));
-_jsx("svg", { _: _svgNs }, check ? _jsx("a", { _: _svgNs }) : _jsx("path", { _: _svgNs }));
+/*#__PURE__*/ _jsx("svg", { _: _svgNs });
+/*#__PURE__*/ _jsx("svg", { "font-family": "Arial", _: _svgNs });
+/*#__PURE__*/ _jsx("feTurbulence", { baseFrequency: "0.025", _: _svgNs });
+/*#__PURE__*/ _jsx("path", { class: "my-class", _: _svgNs });
+/*#__PURE__*/ _jsx("svg", { _: _svgNs }, _jsx("a", { _: _svgNs }));
+/*#__PURE__*/ _jsx("svg", { _: _svgNs }, check ? _jsx("a", { _: _svgNs }) : _jsx("path", { _: _svgNs }));
