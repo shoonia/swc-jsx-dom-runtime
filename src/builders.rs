@@ -125,11 +125,16 @@ pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
     })
 }
 
+#[inline(always)]
+fn ref_param() -> Expr {
+    Expr::Ident(Ident::from(REF_PARAM_KEY))
+}
+
 pub fn set_attr_call_expr(key: &str, value: Expr) -> Expr {
     call_expr(
         Expr::Member(MemberExpr {
             span: DUMMY_SP,
-            obj: Box::new(Expr::Ident(Ident::from(REF_PARAM_KEY))),
+            obj: Box::new(ref_param()),
             prop: MemberProp::Ident(IdentName::from("setAttribute")),
         }),
         vec![prop_expr(str_expr(key.into())), prop_expr(value)],
@@ -142,7 +147,7 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
         op: AssignOp::Assign,
         left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
             span: DUMMY_SP,
-            obj: Box::new(Expr::Ident(Ident::from(REF_PARAM_KEY))),
+            obj: Box::new(ref_param()),
             prop: if is_valid_prop_ident(key) {
                 MemberProp::Ident(IdentName::from(key))
             } else {
@@ -154,4 +159,8 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
         })),
         right: Box::new(value),
     })
+}
+
+pub fn set_utility(callee: Expr, value: Expr) -> Expr {
+    call_expr(callee, vec![prop_expr(ref_param()), prop_expr(value)])
 }

@@ -18,3 +18,5 @@
 <div attr:foo={'hello'} prop:bar-baz={{}} />;
 <div attr:foo={data} prop:bar-baz={data} />;
 <button type="submit" onclick={handleClick} />;
+<div style="color: red; background-color: blue;" />;
+<div style={{ color: 'red', backgroundColor: 'blue' }} />;

@@ -2,15 +2,36 @@ use crate::builders::*;
 use crate::collections::*;
 use crate::consts::*;
 use crate::import_manager::*;
+use core::hint::unreachable_unchecked;
 use std::vec;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
+
+fn is_jsx_attr_val_lit(attr: &JSXAttr) -> bool {
+    let Some(value) = attr.value.as_ref() else {
+        return true;
+    };
+
+    if let JSXAttrValue::Str(_) = value {
+        return true;
+    }
+
+    if let JSXAttrValue::JSXExprContainer(container) = value {
+        if let JSXExpr::Expr(expr) = &container.expr {
+            if let Expr::Lit(_) = expr.as_ref() {
+                return true;
+            }
+        }
+    }
+
+    false
+}
 
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
     let obj_expr = match jsx_memeber.obj {
         JSXObject::Ident(ident) => Expr::Ident(ident),
         JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
-        _ => unreachable!("unsupported JSX object"),
+        _ => unsafe { unreachable_unchecked() },
     };
 
     Expr::Member(MemberExpr {
@@ -26,9 +47,8 @@ fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
     match &container.expr {
-        JSXExpr::JSXEmptyExpr(_) => null_expr(),
         JSXExpr::Expr(expr) => expr.as_ref().clone(),
-        _ => unreachable!("unsupported JSX expression"),
+        _ => null_expr(),
     }
 }
 
@@ -54,7 +74,7 @@ fn convert_jsx_attr_value(attr: &JSXAttr, imports: &mut ImportManager) -> Expr {
             JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
             JSXAttrValue::JSXElement(element) => transform_element(element.as_ref(), imports),
             JSXAttrValue::JSXFragment(fragment) => transform_fragment(fragment, imports),
-            _ => unreachable!("unsupported JSX attribute value"),
+            _ => unsafe { unreachable_unchecked() },
         },
         None => bool_expr(true),
     }
@@ -100,7 +120,7 @@ fn build_props(
                     JSXAttrName::JSXNamespacedName(namespaced) => {
                         &convert_jsx_namespaced_name(namespaced)
                     }
-                    _ => unreachable!("unsupported JSX attribute name"),
+                    _ => unsafe { unreachable_unchecked() },
                 };
 
                 Some(prop(prop_key(key), convert_jsx_attr_value(attr, imports)))
@@ -173,7 +193,7 @@ fn transform_element(element: &JSXElement, imports: &mut ImportManager) -> Expr 
             }
             call_expr(imports.add(ImportName::Jsx), args)
         }
-        _ => unreachable!("unsupported JSX element name"),
+        _ => unsafe { unreachable_unchecked() },
     }
 }
 
@@ -215,7 +235,7 @@ impl VisitMut for JsxTransformer {
                 }
                 ident.sym.as_str()
             }
-            _ => unreachable!("unsupported JSX element name"),
+            _ => unsafe { unreachable_unchecked() },
         };
 
         let is_html = is_html_tag(tag_name);
@@ -237,11 +257,23 @@ impl VisitMut for JsxTransformer {
 
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &attr.name {
-                    if is_custom {
+                    let attr_name = ident.sym.as_str();
+
+                    if attr_name == "style" {
+                        if is_jsx_attr_val_lit(attr) {
+                            continue;
+                        }
+                        remove_indexes.push(index);
+                        refs.push(set_utility(
+                            self.imports.add(ImportName::SetStyle),
+                            convert_jsx_attr_value(attr, &mut self.imports),
+                        ));
                         continue;
                     }
 
-                    let attr_name = ident.sym.as_str();
+                    if is_custom {
+                        continue;
+                    }
 
                     if let Some(a) = HTML_DOM_ATTRIBUTES.get(attr_name) {
                         attr.name = jsx_attr_name(a);

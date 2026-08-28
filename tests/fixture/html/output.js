@@ -1,4 +1,4 @@
-import { jsx as _jsx } from "jsx-dom-runtime";
+import { jsx as _jsx, setStyle as _setStyle } from "jsx-dom-runtime";
 _jsx("div", {});
 _jsx("button", {});
 _jsx("p", {}, _jsx("span", {}));
@@ -19,3 +19,5 @@ _jsx("div", { ref: e => e.foo = {} });
 _jsx("div", { ref: e => { e.setAttribute("foo", 'hello'); e["bar-baz"] = {}; } });
 _jsx("div", { ref: e => { e.setAttribute("foo", data); e["bar-baz"] = data; } });
 _jsx("button", { type: "submit", ref: e => e.onclick = handleClick });
+_jsx("div", { style: "color: red; background-color: blue;" });
+_jsx("div", { ref: e => _setStyle(e, { color: 'red', backgroundColor: 'blue' }) });
