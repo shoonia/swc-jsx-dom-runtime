@@ -269,7 +269,8 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
 
         let mut remove_indexes = Vec::<usize>::new();
         let mut events = Vec::<PropOrSpread>::new();
-        let mut refs = Vec::<Expr>::new();
+        let mut compile_refs = Vec::<Expr>::new();
+        let mut user_refs = Vec::<Expr>::new();
 
         for zip_attr in node.attrs.iter_mut().enumerate() {
             let (index, attr) = zip_attr;
@@ -289,12 +290,17 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                     let attr_name = ident.sym.as_str();
 
                     match attr_name {
+                        "ref" => {
+                            remove_indexes.push(index);
+                            user_refs.push(self.convert_jsx_attr_value(attr));
+                            continue;
+                        }
                         "style" => {
                             if is_jsx_attr_val_lit(attr) {
                                 continue;
                             }
                             remove_indexes.push(index);
-                            refs.push(set_utility(
+                            compile_refs.push(set_utility(
                                 self.imports.add(ImportName::SetStyle),
                                 self.convert_jsx_attr_value(attr),
                             ));
@@ -302,7 +308,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                         }
                         "dataset" => {
                             remove_indexes.push(index);
-                            refs.push(set_utility(
+                            compile_refs.push(set_utility(
                                 self.imports.add(ImportName::SetDataset),
                                 self.convert_jsx_attr_value(attr),
                             ));
@@ -310,7 +316,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                         }
                         "attributes" => {
                             remove_indexes.push(index);
-                            refs.push(set_utility(
+                            compile_refs.push(set_utility(
                                 self.imports.add(ImportName::SetAttributes),
                                 self.convert_jsx_attr_value(attr),
                             ));
@@ -364,7 +370,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
 
                     if name.starts_with("on") {
                         remove_indexes.push(index);
-                        refs.push(prop_assignment_expr(
+                        compile_refs.push(prop_assignment_expr(
                             &name,
                             self.convert_jsx_attr_value(attr),
                         ));
@@ -394,9 +400,9 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
-                                refs.push(set_attr_call_expr(name, value));
+                                compile_refs.push(set_attr_call_expr(name, value));
                             } else {
-                                refs.push(signalish_attr(
+                                compile_refs.push(signalish_attr(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
@@ -411,9 +417,9 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
                             let name = namespaced.name.sym.as_str();
 
                             if let Expr::Lit(_) = value {
-                                refs.push(prop_assignment_expr(name, value));
+                                compile_refs.push(prop_assignment_expr(name, value));
                             } else {
-                                refs.push(signalish_prop(
+                                compile_refs.push(signalish_prop(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
@@ -444,8 +450,22 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
             node.attrs.push(jsx_attr(EVENT_KEY, object_expr(events)));
         }
 
+        let refs = if compile_refs.is_empty() {
+            user_refs
+        } else {
+            user_refs.push(create_ref_cb(compile_refs));
+            user_refs
+        };
+
         if !refs.is_empty() {
-            node.attrs.push(jsx_attr(REF_KEY, create_ref_cb(refs)));
+            node.attrs.push(jsx_attr(
+                REF_KEY,
+                if refs.len() == 1 {
+                    refs[0].clone()
+                } else {
+                    array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect())
+                },
+            ));
         }
 
         if is_svg || self.parent_node.is_svg {

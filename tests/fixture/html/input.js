@@ -23,3 +23,5 @@
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;
 <span attributes={[]} />;
 <iframe dataset={{ foo: 'bar' }} />;
+<div ref={e => e.focus()} />;
+<div ref={e => e.focus()} attr:test="value" prop:foo="bar" style={style} attributes={attrs} onclick={handleClick} />;

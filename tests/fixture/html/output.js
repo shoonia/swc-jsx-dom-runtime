@@ -97,3 +97,18 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
             foo: 'bar'
         })
 });
+/*#__PURE__*/ _jsx("div", {
+    ref: (e)=>e.focus()
+});
+/*#__PURE__*/ _jsx("div", {
+    ref: [
+        (e)=>e.focus(),
+        (e)=>{
+            e.setAttribute("test", "value");
+            e.foo = "bar";
+            _setStyle(e, style);
+            _setAttributes(e, attrs);
+            e.onclick = handleClick;
+        }
+    ]
+});
