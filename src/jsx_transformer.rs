@@ -227,15 +227,8 @@ impl VisitMut for JsxTransformer {
 
     fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
         let tag_name = match &node.name {
-            JSXElementName::JSXMemberExpr(_) => return,
-            JSXElementName::JSXNamespacedName(_) => return,
-            JSXElementName::Ident(ident) => {
-                if is_fn_component(ident) {
-                    return;
-                }
-                ident.sym.as_str()
-            }
-            _ => unsafe { unreachable_unchecked() },
+            JSXElementName::Ident(ident) if !is_fn_component(ident) => ident.sym.as_str(),
+            _ => return,
         };
 
         let is_html = is_html_tag(tag_name);
@@ -362,18 +355,36 @@ impl VisitMut for JsxTransformer {
                         }
                         "attr" => {
                             remove_indexes.push(index);
-                            refs.push(set_attr_call_expr(
-                                namespaced.name.sym.as_str(),
-                                convert_jsx_attr_value(attr, &mut self.imports),
-                            ));
+                            let value = convert_jsx_attr_value(attr, &mut self.imports);
+                            let name = namespaced.name.sym.as_str();
+
+                            if let Expr::Lit(_) = value {
+                                refs.push(set_attr_call_expr(name, value));
+                            } else {
+                                refs.push(signalish_attr(
+                                    self.imports.add(ImportName::SetSignalish),
+                                    name,
+                                    value,
+                                ))
+                            }
+
                             continue;
                         }
                         "prop" => {
                             remove_indexes.push(index);
-                            refs.push(prop_assignment_expr(
-                                namespaced.name.sym.as_str(),
-                                convert_jsx_attr_value(attr, &mut self.imports),
-                            ));
+                            let value = convert_jsx_attr_value(attr, &mut self.imports);
+                            let name = namespaced.name.sym.as_str();
+
+                            if let Expr::Lit(_) = value {
+                                refs.push(prop_assignment_expr(name, value));
+                            } else {
+                                refs.push(signalish_prop(
+                                    self.imports.add(ImportName::SetSignalish),
+                                    name,
+                                    value,
+                                ))
+                            }
+
                             continue;
                         }
                         _ => {}

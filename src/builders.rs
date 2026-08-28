@@ -4,17 +4,17 @@ use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::utils::is_valid_prop_ident;
 
-#[inline(always)]
+#[inline]
 pub fn null_expr() -> Expr {
     Expr::Lit(Lit::Null(Null::dummy()))
 }
 
-#[inline(always)]
+#[inline]
 pub fn bool_expr(value: bool) -> Expr {
     Expr::Lit(Lit::Bool(Bool::from(value)))
 }
 
-#[inline(always)]
+#[inline]
 pub fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     Expr::Array(ArrayLit {
         span: DUMMY_SP,
@@ -22,7 +22,7 @@ pub fn array_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
     })
 }
 
-#[inline(always)]
+#[inline]
 pub fn object_expr(props: Vec<PropOrSpread>) -> Expr {
     Expr::Object(ObjectLit {
         span: DUMMY_SP,
@@ -30,17 +30,17 @@ pub fn object_expr(props: Vec<PropOrSpread>) -> Expr {
     })
 }
 
-#[inline(always)]
+#[inline]
 pub fn str_expr(value: Wtf8Atom) -> Expr {
     Expr::Lit(Lit::Str(Str::from(value)))
 }
 
-#[inline(always)]
+#[inline]
 pub fn prop_expr(expr: Expr) -> ExprOrSpread {
     ExprOrSpread::from(Box::new(expr))
 }
 
-#[inline(always)]
+#[inline]
 pub fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
     Expr::Call(CallExpr {
         span: DUMMY_SP,
@@ -51,12 +51,12 @@ pub fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
     })
 }
 
-#[inline(always)]
+#[inline]
 pub fn prop_ident(key: &str) -> PropName {
     PropName::Ident(IdentName::from(key))
 }
 
-#[inline(always)]
+#[inline]
 pub fn prop_key(key: &str) -> PropName {
     if is_valid_prop_ident(key) {
         prop_ident(key)
@@ -65,7 +65,7 @@ pub fn prop_key(key: &str) -> PropName {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn prop(key: PropName, value: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
         key,
@@ -73,17 +73,17 @@ pub fn prop(key: PropName, value: Expr) -> PropOrSpread {
     })))
 }
 
-#[inline(always)]
+#[inline]
 pub fn jsx_attr_val_str(value: &str) -> Option<JSXAttrValue> {
     Some(JSXAttrValue::Str(Str::from(value)))
 }
 
-#[inline(always)]
+#[inline]
 pub fn jsx_attr_name(name: &str) -> JSXAttrName {
     JSXAttrName::Ident(IdentName::from(name))
 }
 
-#[inline(always)]
+#[inline]
 pub fn jsx_attr(name: &str, value: Expr) -> JSXAttrOrSpread {
     JSXAttrOrSpread::JSXAttr(JSXAttr {
         span: DUMMY_SP,
@@ -92,6 +92,25 @@ pub fn jsx_attr(name: &str, value: Expr) -> JSXAttrOrSpread {
             span: DUMMY_SP,
             expr: JSXExpr::Expr(Box::new(value)),
         })),
+    })
+}
+
+#[inline]
+fn arrow_fn_param(name: &str) -> Pat {
+    Pat::Ident(BindingIdent::from(Ident::from(name)))
+}
+
+#[inline]
+fn arrow_fn_expr(param: Pat, body: ArrowFunctionBody) -> Expr {
+    Expr::Arrow(ArrowExpr {
+        span: DUMMY_SP,
+        ctxt: SyntaxContext::empty(),
+        params: vec![param],
+        body: Box::new(body),
+        is_async: false,
+        is_generator: false,
+        type_params: None,
+        return_type: None,
     })
 }
 
@@ -113,23 +132,15 @@ pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
         })
     };
 
-    Expr::Arrow(ArrowExpr {
-        span: DUMMY_SP,
-        ctxt: SyntaxContext::empty(),
-        params: vec![Pat::Ident(BindingIdent::from(Ident::from(REF_PARAM_KEY)))],
-        body: Box::new(body),
-        is_async: false,
-        is_generator: false,
-        type_params: None,
-        return_type: None,
-    })
+    arrow_fn_expr(arrow_fn_param(REF_PARAM_KEY), body)
 }
 
-#[inline(always)]
+#[inline]
 fn ref_param() -> Expr {
     Expr::Ident(Ident::from(REF_PARAM_KEY))
 }
 
+#[inline]
 pub fn set_attr_call_expr(key: &str, value: Expr) -> Expr {
     call_expr(
         Expr::Member(MemberExpr {
@@ -163,4 +174,28 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
 
 pub fn set_utility(callee: Expr, value: Expr) -> Expr {
     call_expr(callee, vec![prop_expr(ref_param()), prop_expr(value)])
+}
+
+pub fn signalish_prop(callee: Expr, name: &str, value: Expr) -> Expr {
+    let cb = arrow_fn_expr(
+        arrow_fn_param(SIGNAL_PARAM_KEY),
+        ArrowFunctionBody::Expr(Box::new(prop_assignment_expr(
+            name,
+            Expr::Ident(Ident::from(SIGNAL_PARAM_KEY)),
+        ))),
+    );
+
+    call_expr(callee, vec![prop_expr(value), prop_expr(cb)])
+}
+
+pub fn signalish_attr(callee: Expr, name: &str, value: Expr) -> Expr {
+    let cb = arrow_fn_expr(
+        arrow_fn_param(SIGNAL_PARAM_KEY),
+        ArrowFunctionBody::Expr(Box::new(set_attr_call_expr(
+            name,
+            Expr::Ident(Ident::from(SIGNAL_PARAM_KEY)),
+        ))),
+    );
+
+    call_expr(callee, vec![prop_expr(value), prop_expr(cb)])
 }

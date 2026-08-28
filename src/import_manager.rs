@@ -9,7 +9,7 @@ pub enum ImportName {
     MathmlNs,
     SetStyle,
     SetDataset,
-    // SetSignalish,
+    SetSignalish,
     SetAttributes,
 }
 
@@ -21,7 +21,7 @@ impl ImportName {
             Self::MathmlNs => "mathmlNs",
             Self::SetStyle => "setStyle",
             Self::SetDataset => "setDataset",
-            // Self::SetSignalish => "setSignalish",
+            Self::SetSignalish => "setSignalish",
             Self::SetAttributes => "setAttributes",
         }
     }
