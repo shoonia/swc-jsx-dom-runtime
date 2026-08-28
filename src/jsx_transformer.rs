@@ -205,22 +205,20 @@ impl<C: Comments> JsxTransformer<C> {
     fn build_children(&mut self, children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
         children
             .iter()
-            .filter_map(|child| match child {
+            .map(|child| match child {
                 JSXElementChild::JSXExprContainer(container) => {
-                    Some(Some(prop_expr(convert_jsx_container(container))))
+                    Some(prop_expr(convert_jsx_container(container)))
                 }
-                JSXElementChild::JSXSpreadChild(spread) => Some(Some(ExprOrSpread {
+                JSXElementChild::JSXSpreadChild(spread) => Some(ExprOrSpread {
                     spread: Some(spread.span),
                     expr: spread.expr.clone(),
-                })),
-                JSXElementChild::JSXText(text) => {
-                    Some(Some(prop_expr(str_expr(text.value.clone()))))
-                }
+                }),
+                JSXElementChild::JSXText(text) => Some(prop_expr(str_expr(text.value.clone()))),
                 JSXElementChild::JSXElement(element) => {
-                    Some(Some(prop_expr(self.transform_element(element.as_ref()))))
+                    Some(prop_expr(self.transform_element(element.as_ref())))
                 }
                 JSXElementChild::JSXFragment(fragment) => {
-                    Some(Some(prop_expr(self.transform_fragment(fragment))))
+                    Some(prop_expr(self.transform_fragment(fragment)))
                 }
                 _ => None,
             })
