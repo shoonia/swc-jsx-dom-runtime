@@ -16,3 +16,21 @@ import { mathmlNs as _mathmlNs, jsx as _jsx } from "jsx-dom-runtime";
 }, check ? _jsx("a", {
     _: _mathmlNs
 }) : null);
+/*#__PURE__*/ _jsx("mi", {
+    _: _mathmlNs
+}, _jsx("a", {
+    href: "https://example.com",
+    _: _mathmlNs
+}));
+/*#__PURE__*/ _jsx("mi", {
+    _: _mathmlNs
+}, [
+    _jsx("a", {
+        href: "https://example.com",
+        _: _mathmlNs
+    }),
+    _jsx("a", {
+        href: "https://example.com",
+        _: _mathmlNs
+    })
+]);

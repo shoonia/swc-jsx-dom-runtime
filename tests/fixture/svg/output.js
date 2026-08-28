@@ -26,3 +26,21 @@ import { svgNs as _svgNs, jsx as _jsx } from "jsx-dom-runtime";
 }) : _jsx("path", {
     _: _svgNs
 }));
+/*#__PURE__*/ _jsx("path", {
+    _: _svgNs
+}, _jsx("a", {
+    href: "https://example.com",
+    _: _svgNs
+}));
+/*#__PURE__*/ _jsx("path", {
+    _: _svgNs
+}, [
+    _jsx("a", {
+        href: "https://example.com",
+        _: _svgNs
+    }),
+    _jsx("a", {
+        href: "https://example.com",
+        _: _svgNs
+    })
+]);
