@@ -259,16 +259,35 @@ impl VisitMut for JsxTransformer {
                 if let JSXAttrName::Ident(ident) = &attr.name {
                     let attr_name = ident.sym.as_str();
 
-                    if attr_name == "style" {
-                        if is_jsx_attr_val_lit(attr) {
+                    match attr_name {
+                        "style" => {
+                            if is_jsx_attr_val_lit(attr) {
+                                continue;
+                            }
+                            remove_indexes.push(index);
+                            refs.push(set_utility(
+                                self.imports.add(ImportName::SetStyle),
+                                convert_jsx_attr_value(attr, &mut self.imports),
+                            ));
                             continue;
                         }
-                        remove_indexes.push(index);
-                        refs.push(set_utility(
-                            self.imports.add(ImportName::SetStyle),
-                            convert_jsx_attr_value(attr, &mut self.imports),
-                        ));
-                        continue;
+                        "dataset" => {
+                            remove_indexes.push(index);
+                            refs.push(set_utility(
+                                self.imports.add(ImportName::SetDataset),
+                                convert_jsx_attr_value(attr, &mut self.imports),
+                            ));
+                            continue;
+                        }
+                        "attributes" => {
+                            remove_indexes.push(index);
+                            refs.push(set_utility(
+                                self.imports.add(ImportName::SetAttributes),
+                                convert_jsx_attr_value(attr, &mut self.imports),
+                            ));
+                            continue;
+                        }
+                        _ => {}
                     }
 
                     if is_custom {

@@ -20,3 +20,5 @@
 <button type="submit" onclick={handleClick} />;
 <div style="color: red; background-color: blue;" />;
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;
+<span attributes={[]} />;
+<iframe dataset={{ foo: 'bar' }} />;

@@ -8,9 +8,9 @@ pub enum ImportName {
     SvgNs,
     MathmlNs,
     SetStyle,
-    // SetDataset,
+    SetDataset,
     // SetSignalish,
-    // SetAttributes,
+    SetAttributes,
 }
 
 impl ImportName {
@@ -20,9 +20,9 @@ impl ImportName {
             Self::SvgNs => "svgNs",
             Self::MathmlNs => "mathmlNs",
             Self::SetStyle => "setStyle",
-            // Self::SetDataset => "setDataset",
+            Self::SetDataset => "setDataset",
             // Self::SetSignalish => "setSignalish",
-            // Self::SetAttributes => "setAttributes",
+            Self::SetAttributes => "setAttributes",
         }
     }
 }
