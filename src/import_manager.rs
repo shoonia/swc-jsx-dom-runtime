@@ -74,7 +74,7 @@ impl ImportManager {
                 src: Box::new(Str::from("jsx-dom-runtime")),
                 type_only: false,
                 with: None,
-                phase: Default::default(),
+                phase: ImportPhase::Evaluation,
             })),
         );
     }

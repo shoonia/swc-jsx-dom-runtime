@@ -1,7 +1,19 @@
 1;
-[1,2];
+[
+    1,
+    2
+];
 null;
-[...data];
-[1, ...data];
+[
+    ...data
+];
+[
+    1,
+    ...data
+];
 "hello";
-["hello ", 10, " Hello"];
+[
+    "hello ",
+    10,
+    " Hello"
+];

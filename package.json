@@ -10,7 +10,8 @@
   "main": "target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm",
   "scripts": {
     "build": "cargo build-wasip1 --release",
-    "test": "cargo clean && cargo test"
+    "test": "cargo clean && cargo test",
+    "fixture": "UPDATE=1 cargo test --test fixture"
   },
   "files": [],
   "preferUnplugged": true

@@ -1,0 +1,8 @@
+  x 
+  | 
+  | SyntaxError: HTML, SVG, MathML or Custom Elements must not have spread attributes.
+  | 
+   ,-[input.js:1:1]
+ 1 | <div {...props} />;
+   :       ^^^^^^^^
+   `----

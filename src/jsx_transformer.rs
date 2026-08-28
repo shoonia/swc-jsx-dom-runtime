@@ -4,7 +4,7 @@ use crate::consts::*;
 use crate::import_manager::*;
 use core::hint::unreachable_unchecked;
 use std::vec;
-use swc_core::common::{comments::Comments, Span};
+use swc_core::common::{comments::Comments, errors::HANDLER, Span, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
@@ -43,7 +43,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
-    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name) as String
+    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
 }
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
@@ -257,6 +257,16 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
         for zip_attr in node.attrs.iter_mut().enumerate() {
             let (index, attr) = zip_attr;
 
+            if let JSXAttrOrSpread::SpreadElement(spread) = attr {
+                HANDLER.with(|handler| {
+                    handler
+                        .struct_fatal("\n\nSyntaxError: HTML, SVG, MathML or Custom Elements must not have spread attributes.\n")
+                        .set_span(spread.span())
+                        .emit();
+                });
+                continue;
+            }
+
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
                 if let JSXAttrName::Ident(ident) = &attr.name {
                     let attr_name = ident.sym.as_str();
@@ -310,7 +320,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
 
                     let name = attr_name.to_lowercase();
 
-                    if is_html {
+                    if is_html && name != attr_name {
                         attr.name = jsx_attr_name(&name);
                     }
 
