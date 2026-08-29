@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::array;
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 pub enum ImportName {
     Jsx,
     SvgNs,
@@ -14,7 +14,21 @@ pub enum ImportName {
 }
 
 impl ImportName {
-    pub fn as_str(&self) -> &'static str {
+    const COUNT: usize = 7;
+
+    const fn index(self) -> usize {
+        match self {
+            Self::Jsx => 0,
+            Self::SvgNs => 1,
+            Self::MathmlNs => 2,
+            Self::SetStyle => 3,
+            Self::SetDataset => 4,
+            Self::SetSignalish => 5,
+            Self::SetAttributes => 6,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Jsx => "jsx",
             Self::SvgNs => "svgNs",
@@ -28,37 +42,37 @@ impl ImportName {
 }
 
 pub struct ImportManager {
-    cache: HashMap<ImportName, Expr>,
+    cache: [Option<Ident>; ImportName::COUNT],
     specifiers: Vec<ImportSpecifier>,
 }
 
 impl ImportManager {
     pub fn new() -> Self {
         Self {
-            cache: HashMap::new(),
+            cache: array::from_fn(|_| None),
             specifiers: Vec::new(),
         }
     }
 
     pub fn add(&mut self, import_name: ImportName) -> Expr {
-        if let Some(ident) = self.cache.get(&import_name) {
-            return ident.clone();
+        let index = import_name.index();
+
+        if let Some(ident) = &self.cache[index] {
+            return Expr::Ident(ident.clone());
         }
 
-        let local_name: String = format!("_{}", import_name.as_str());
-        let local_ident = Ident::from(local_name);
-        let expr_ident = Expr::Ident(local_ident.clone());
+        let local_ident = Ident::from(format!("_{}", import_name.as_str()));
 
-        self.cache.insert(import_name, expr_ident.clone());
+        self.cache[index] = Some(local_ident.clone());
         self.specifiers
             .push(ImportSpecifier::Named(ImportNamedSpecifier {
                 span: DUMMY_SP,
-                local: local_ident,
+                local: local_ident.clone(),
                 imported: Some(ModuleExportName::Ident(Ident::from(import_name.as_str()))),
                 is_type_only: false,
             }));
 
-        expr_ident
+        Expr::Ident(local_ident)
     }
 
     pub fn inject_into_module(&self, module: &mut Module) {
