@@ -69,15 +69,22 @@ fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
 }
 
 #[derive(Clone, Copy)]
-struct ParentNode {
+struct ParentScope {
     is_svg: bool,
     is_mathml: bool,
+}
+
+struct NodeScope {
+    is_svg: bool,
+    is_html: bool,
+    is_mathml: bool,
+    is_custom: bool,
 }
 
 pub struct JsxTransformer<C: Comments> {
     comments: Option<C>,
     imports: ImportManager,
-    parent_node: ParentNode,
+    parent_scope: ParentScope,
 }
 
 impl<C: Comments> JsxTransformer<C> {
@@ -85,7 +92,7 @@ impl<C: Comments> JsxTransformer<C> {
         Self {
             comments,
             imports: ImportManager::new(),
-            parent_node: ParentNode {
+            parent_scope: ParentScope {
                 is_svg: false,
                 is_mathml: false,
             },
@@ -226,22 +233,7 @@ impl<C: Comments> JsxTransformer<C> {
             .collect()
     }
 
-    fn transform_opening_element(&mut self, node: &mut JSXOpeningElement) {
-        let tag_name = match &node.name {
-            JSXElementName::Ident(ident) if !is_fn_component(ident) => ident.sym.as_str(),
-            _ => return,
-        };
-
-        let is_html = is_html_tag(tag_name);
-        let is_svg = is_svg_tag(tag_name);
-        let is_mathml = is_mathml_tag(tag_name);
-        let is_standard = is_html || is_svg || is_mathml;
-        let is_custom = !is_standard && tag_name.contains('-');
-
-        if !(is_standard || is_custom) {
-            return;
-        }
-
+    fn transform_opening_element(&mut self, node: &mut JSXOpeningElement, scope: NodeScope) {
         let mut remove_indexes = Vec::<usize>::new();
         let mut events = Vec::<PropOrSpread>::new();
         let mut compile_refs = Vec::<Expr>::new();
@@ -300,7 +292,7 @@ impl<C: Comments> JsxTransformer<C> {
                         _ => {}
                     }
 
-                    if is_custom {
+                    if scope.is_custom {
                         continue;
                     }
 
@@ -309,7 +301,7 @@ impl<C: Comments> JsxTransformer<C> {
                         continue;
                     }
 
-                    if is_svg {
+                    if scope.is_svg {
                         if let Some(a) = SVG_DOM_ATTRIBUTES.get(attr_name) {
                             attr.name = jsx_attr_name(a);
                         }
@@ -318,7 +310,7 @@ impl<C: Comments> JsxTransformer<C> {
 
                     let name = attr_name.to_lowercase();
 
-                    if is_html && name != attr_name {
+                    if scope.is_html && name != attr_name {
                         attr.name = jsx_attr_name(&name);
                     }
 
@@ -406,7 +398,7 @@ impl<C: Comments> JsxTransformer<C> {
                         _ => {}
                     }
 
-                    if is_custom {
+                    if scope.is_custom {
                         continue;
                     }
 
@@ -443,10 +435,10 @@ impl<C: Comments> JsxTransformer<C> {
             ));
         }
 
-        if is_svg || self.parent_node.is_svg {
+        if scope.is_svg || self.parent_scope.is_svg {
             node.attrs
                 .push(jsx_attr(NS_KEY, self.imports.add(ImportName::SvgNs)));
-        } else if is_mathml || self.parent_node.is_mathml {
+        } else if scope.is_mathml || self.parent_scope.is_mathml {
             node.attrs
                 .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
         }
@@ -460,23 +452,39 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
     }
 
     fn visit_mut_jsx_element(&mut self, element: &mut JSXElement) {
-        let is_svg = matches!(
-            &element.opening.name,
-            JSXElementName::Ident(ident) if is_svg_tag(ident.sym.as_str())
-        ) || self.parent_node.is_svg;
+        let tag_name = match &element.opening.name {
+            JSXElementName::Ident(ident) if !is_fn_component(ident) => ident.sym.as_str(),
+            _ => return,
+        };
 
-        let is_mathml = matches!(
-            &element.opening.name,
-            JSXElementName::Ident(ident) if is_mathml_tag(ident.sym.as_str())
-        ) || self.parent_node.is_mathml;
+        let is_html = is_html_tag(tag_name);
+        let is_svg = is_svg_tag(tag_name);
+        let is_mathml = is_mathml_tag(tag_name);
+        let is_standard = is_html || is_svg || is_mathml;
+        let is_custom = !is_standard && tag_name.contains('-');
 
-        let prev_scope = self.parent_node;
-        self.parent_node = ParentNode { is_svg, is_mathml };
+        if !(is_standard || is_custom) {
+            return;
+        }
 
-        self.transform_opening_element(&mut element.opening);
+        let prev_parent_scope = self.parent_scope;
+
+        self.parent_scope = ParentScope {
+            is_svg: is_svg || self.parent_scope.is_svg,
+            is_mathml: is_mathml || self.parent_scope.is_mathml,
+        };
+        self.transform_opening_element(
+            &mut element.opening,
+            NodeScope {
+                is_svg,
+                is_html,
+                is_mathml,
+                is_custom,
+            },
+        );
+
         element.children.visit_mut_with(self);
-
-        self.parent_node = prev_scope;
+        self.parent_scope = prev_parent_scope;
     }
 
     fn visit_mut_expr(&mut self, node: &mut Expr) {
