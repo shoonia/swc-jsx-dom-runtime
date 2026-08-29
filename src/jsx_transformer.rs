@@ -225,33 +225,8 @@ impl<C: Comments> JsxTransformer<C> {
             })
             .collect()
     }
-}
 
-impl<C: Comments> VisitMut for JsxTransformer<C> {
-    fn visit_mut_module(&mut self, module: &mut Module) {
-        module.visit_mut_children_with(self);
-        self.imports.inject_into_module(module);
-    }
-
-    fn visit_mut_jsx_element(&mut self, element: &mut JSXElement) {
-        let is_svg = matches!(
-            &element.opening.name,
-            JSXElementName::Ident(ident) if is_svg_tag(ident.sym.as_str())
-        ) || self.parent_node.is_svg;
-
-        let is_mathml = matches!(
-            &element.opening.name,
-            JSXElementName::Ident(ident) if is_mathml_tag(ident.sym.as_str())
-        ) || self.parent_node.is_mathml;
-
-        let prev_scope = self.parent_node;
-
-        self.parent_node = ParentNode { is_svg, is_mathml };
-        element.visit_mut_children_with(self);
-        self.parent_node = prev_scope;
-    }
-
-    fn visit_mut_jsx_opening_element(&mut self, node: &mut JSXOpeningElement) {
+    fn transform_opening_element(&mut self, node: &mut JSXOpeningElement) {
         let tag_name = match &node.name {
             JSXElementName::Ident(ident) if !is_fn_component(ident) => ident.sym.as_str(),
             _ => return,
@@ -475,6 +450,33 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
             node.attrs
                 .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
         }
+    }
+}
+
+impl<C: Comments> VisitMut for JsxTransformer<C> {
+    fn visit_mut_module(&mut self, module: &mut Module) {
+        module.visit_mut_children_with(self);
+        self.imports.inject_into_module(module);
+    }
+
+    fn visit_mut_jsx_element(&mut self, element: &mut JSXElement) {
+        let is_svg = matches!(
+            &element.opening.name,
+            JSXElementName::Ident(ident) if is_svg_tag(ident.sym.as_str())
+        ) || self.parent_node.is_svg;
+
+        let is_mathml = matches!(
+            &element.opening.name,
+            JSXElementName::Ident(ident) if is_mathml_tag(ident.sym.as_str())
+        ) || self.parent_node.is_mathml;
+
+        let prev_scope = self.parent_node;
+        self.parent_node = ParentNode { is_svg, is_mathml };
+
+        self.transform_opening_element(&mut element.opening);
+        element.children.visit_mut_with(self);
+
+        self.parent_node = prev_scope;
     }
 
     fn visit_mut_expr(&mut self, node: &mut Expr) {
