@@ -265,7 +265,7 @@ impl<C: Comments> JsxTransformer<C> {
                             user_refs.push(self.convert_jsx_attr_value(attr));
                             continue;
                         }
-                        "children" => {
+                        CHILDREN_KEY => {
                             remove_indexes.push(index);
                             children_props.push(attr.clone());
                             continue;
