@@ -260,7 +260,7 @@ impl<C: Comments> JsxTransformer<C> {
                     let attr_name = ident.sym.as_str();
 
                     match attr_name {
-                        "ref" => {
+                        REF_KEY => {
                             remove_indexes.push(index);
                             user_refs.push(self.convert_jsx_attr_value(attr));
                             continue;
@@ -296,7 +296,7 @@ impl<C: Comments> JsxTransformer<C> {
                             ));
                             continue;
                         }
-                        "_" => {
+                        NS_KEY => {
                             no_ns = false;
                             continue;
                         }
