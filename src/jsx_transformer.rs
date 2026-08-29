@@ -8,24 +8,24 @@ use swc_core::common::{comments::Comments, errors::HANDLER, Span, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-fn is_jsx_attr_val_lit(attr: &JSXAttr) -> bool {
+fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
     let Some(value) = attr.value.as_ref() else {
-        return true;
+        return false;
     };
 
     if let JSXAttrValue::Str(_) = value {
-        return true;
+        return false;
     }
 
     if let JSXAttrValue::JSXExprContainer(container) = value {
         if let JSXExpr::Expr(expr) = &container.expr {
             if let Expr::Lit(_) = expr.as_ref() {
-                return true;
+                return false;
             }
         }
     }
 
-    false
+    true
 }
 
 fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
@@ -43,7 +43,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
-    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
+    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name) as String
 }
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
@@ -233,11 +233,13 @@ impl<C: Comments> JsxTransformer<C> {
             .collect()
     }
 
-    fn transform_opening_element(&mut self, node: &mut JSXOpeningElement, scope: NodeScope) {
+    fn transform_jsx_element(&mut self, element: &mut JSXElement, scope: NodeScope) {
+        let node = &mut element.opening;
         let mut remove_indexes = Vec::<usize>::new();
         let mut events = Vec::<PropOrSpread>::new();
         let mut compile_refs = Vec::<Expr>::new();
         let mut user_refs = Vec::<Expr>::new();
+        let mut children_props = Vec::<JSXAttr>::new();
 
         for zip_attr in node.attrs.iter_mut().enumerate() {
             let (index, attr) = zip_attr;
@@ -262,15 +264,19 @@ impl<C: Comments> JsxTransformer<C> {
                             user_refs.push(self.convert_jsx_attr_value(attr));
                             continue;
                         }
-                        "style" => {
-                            if is_jsx_attr_val_lit(attr) {
-                                continue;
-                            }
+                        "children" => {
                             remove_indexes.push(index);
-                            compile_refs.push(set_utility(
-                                self.imports.add(ImportName::SetStyle),
-                                self.convert_jsx_attr_value(attr),
-                            ));
+                            children_props.push(attr.clone());
+                            continue;
+                        }
+                        "style" => {
+                            if non_lit_jsx_attr_val(attr) {
+                                remove_indexes.push(index);
+                                compile_refs.push(set_utility(
+                                    self.imports.add(ImportName::SetStyle),
+                                    self.convert_jsx_attr_value(attr),
+                                ));
+                            }
                             continue;
                         }
                         "dataset" => {
@@ -435,6 +441,18 @@ impl<C: Comments> JsxTransformer<C> {
             ));
         }
 
+        if !children_props.is_empty() && element.children.is_empty() {
+            let last_children = children_props.pop().unwrap();
+            let value = self.convert_jsx_attr_value(&last_children);
+
+            element
+                .children
+                .push(JSXElementChild::JSXExprContainer(JSXExprContainer {
+                    span: last_children.span,
+                    expr: JSXExpr::Expr(Box::new(value)),
+                }));
+        }
+
         if scope.is_svg || self.parent_scope.is_svg {
             node.attrs
                 .push(jsx_attr(NS_KEY, self.imports.add(ImportName::SvgNs)));
@@ -473,8 +491,8 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
             is_svg: is_svg || self.parent_scope.is_svg,
             is_mathml: is_mathml || self.parent_scope.is_mathml,
         };
-        self.transform_opening_element(
-            &mut element.opening,
+        self.transform_jsx_element(
+            element,
             NodeScope {
                 is_svg,
                 is_html,
