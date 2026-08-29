@@ -6,6 +6,9 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[target.wasm32-wasip1]
+rustflags = ["--cfg", "swc_ast_unknown"]
+
 [profile.release]
 opt-level = "z"
 lto = true
