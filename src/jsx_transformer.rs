@@ -43,7 +43,7 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
-    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name) as String
+    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
 }
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
@@ -133,7 +133,6 @@ impl<C: Comments> JsxTransformer<C> {
 
     fn transform_fragment(&mut self, fragment: &JSXFragment) -> Expr {
         let elems = self.build_children(&fragment.children);
-
         if elems.is_empty() {
             null_expr()
         } else {
@@ -302,13 +301,13 @@ impl<C: Comments> JsxTransformer<C> {
                         continue;
                     }
 
-                    if let Some(a) = HTML_DOM_ATTRIBUTES.get(attr_name) {
+                    if let Some(a) = html_dom_attribute(attr_name) {
                         attr.name = jsx_attr_name(a);
                         continue;
                     }
 
                     if scope.is_svg {
-                        if let Some(a) = SVG_DOM_ATTRIBUTES.get(attr_name) {
+                        if let Some(a) = svg_dom_attribute(attr_name) {
                             attr.name = jsx_attr_name(a);
                         }
                         continue;
