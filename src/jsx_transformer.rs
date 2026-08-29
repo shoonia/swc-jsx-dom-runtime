@@ -438,10 +438,9 @@ impl<C: Comments> JsxTransformer<C> {
         if !refs.is_empty() {
             node.attrs.push(jsx_attr(
                 REF_KEY,
-                if refs.len() == 1 {
-                    refs[0].clone()
-                } else {
-                    array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect())
+                match refs.len() {
+                    1 => refs.into_iter().next().unwrap(),
+                    _ => array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect()),
                 },
             ));
         }
