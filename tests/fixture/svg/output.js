@@ -1,4 +1,5 @@
 import { svgNs as _svgNs, jsx as _jsx } from "jsx-dom-runtime";
+import { svgNs } from "jsx-dom-runtime";
 /*#__PURE__*/ _jsx("svg", {
     _: _svgNs
 });
@@ -44,3 +45,6 @@ import { svgNs as _svgNs, jsx as _jsx } from "jsx-dom-runtime";
         _: _svgNs
     })
 ]);
+/*#__PURE__*/ _jsx("a", {
+    _: svgNs
+});

@@ -43,7 +43,8 @@ fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
-    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
+    let name = format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name);
+    name
 }
 
 fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
@@ -239,6 +240,7 @@ impl<C: Comments> JsxTransformer<C> {
         let mut compile_refs = Vec::<Expr>::new();
         let mut user_refs = Vec::<Expr>::new();
         let mut children_props = Vec::<JSXAttr>::new();
+        let mut no_ns = true;
 
         for zip_attr in node.attrs.iter_mut().enumerate() {
             let (index, attr) = zip_attr;
@@ -292,6 +294,10 @@ impl<C: Comments> JsxTransformer<C> {
                                 self.imports.add(ImportName::SetAttributes),
                                 self.convert_jsx_attr_value(attr),
                             ));
+                            continue;
+                        }
+                        "_" => {
+                            no_ns = false;
                             continue;
                         }
                         _ => {}
@@ -452,12 +458,14 @@ impl<C: Comments> JsxTransformer<C> {
                 }));
         }
 
-        if scope.is_svg || self.parent_scope.is_svg {
-            node.attrs
-                .push(jsx_attr(NS_KEY, self.imports.add(ImportName::SvgNs)));
-        } else if scope.is_mathml || self.parent_scope.is_mathml {
-            node.attrs
-                .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
+        if no_ns {
+            if scope.is_svg || self.parent_scope.is_svg {
+                node.attrs
+                    .push(jsx_attr(NS_KEY, self.imports.add(ImportName::SvgNs)));
+            } else if scope.is_mathml || self.parent_scope.is_mathml {
+                node.attrs
+                    .push(jsx_attr(NS_KEY, self.imports.add(ImportName::MathmlNs)));
+            }
         }
     }
 }

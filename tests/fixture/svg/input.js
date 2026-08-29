@@ -1,3 +1,4 @@
+import { svgNs } from "jsx-dom-runtime";
 <svg />;
 <svg fontFamily="Arial" />;
 <feTurbulence baseFrequency="0.025" />;
@@ -6,3 +7,4 @@
 <svg>{ check ? <a /> : <path /> }</svg>;
 <path><a href="https://example.com" /></path>;
 <path><a href="https://example.com" /><a href="https://example.com" /></path>;
+<a _={svgNs} />;

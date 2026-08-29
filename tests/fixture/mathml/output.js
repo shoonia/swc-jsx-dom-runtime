@@ -1,4 +1,5 @@
 import { mathmlNs as _mathmlNs, jsx as _jsx } from "jsx-dom-runtime";
+import { mathmlNs } from "jsx-dom-runtime";
 /*#__PURE__*/ _jsx("math", {
     _: _mathmlNs
 });
@@ -34,3 +35,6 @@ import { mathmlNs as _mathmlNs, jsx as _jsx } from "jsx-dom-runtime";
         _: _mathmlNs
     })
 ]);
+/*#__PURE__*/ _jsx("a", {
+    _: mathmlNs
+});
