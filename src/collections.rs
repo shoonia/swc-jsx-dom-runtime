@@ -11,6 +11,7 @@ pub fn is_fn_component(ident: &Ident) -> bool {
     )
 }
 
+#[inline(always)]
 pub fn is_html_tag(tag: &str) -> bool {
     matches!(
         tag,
