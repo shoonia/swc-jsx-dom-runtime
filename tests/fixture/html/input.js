@@ -41,3 +41,6 @@
 <img alt='
         text
 ' />;
+<img alt={`
+    hello ${user}
+`} />;

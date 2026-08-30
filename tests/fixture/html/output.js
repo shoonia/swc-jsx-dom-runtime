@@ -137,3 +137,8 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
 /*#__PURE__*/ _jsx("img", {
     alt: " text "
 });
+/*#__PURE__*/ _jsx("img", {
+    alt: `
+    hello ${user}
+`
+});
