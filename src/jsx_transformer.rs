@@ -375,7 +375,9 @@ impl<C: Comments> JsxTransformer<C> {
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
                             let ref_expr = match value {
-                                Expr::Lit(_) => set_attr_call_expr(name, value),
+                                Expr::Lit(_) | Expr::Tpl(_) | Expr::Array(_) | Expr::Object(_) => {
+                                    set_attr_call_expr(name, value)
+                                }
                                 _ => signalish_attr(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
@@ -391,7 +393,9 @@ impl<C: Comments> JsxTransformer<C> {
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
                             let ref_expr = match value {
-                                Expr::Lit(_) => prop_assignment_expr(name, value),
+                                Expr::Lit(_) | Expr::Tpl(_) | Expr::Array(_) | Expr::Object(_) => {
+                                    prop_assignment_expr(name, value)
+                                }
                                 _ => signalish_prop(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,

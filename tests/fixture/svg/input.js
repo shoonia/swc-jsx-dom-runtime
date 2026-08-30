@@ -10,3 +10,7 @@ import { svgNs } from "jsx-dom-runtime";
 <a _={svgNs} />;
 <animateTransform onclick={handler} />;
 <text data-test />;
+<text prop:foo={{}}/>;
+<text prop:foo={[]}/>;
+<text prop:hello="world" />;
+<text prop:hello={`hello ${user}`} />;

@@ -12,12 +12,15 @@
 <div on:click={() => console.log("clicked")} />;
 <div on:click={() => 1} on:mouseOver={() => 2} />;
 <input type="text" on:focusIn={{ handleEvent }} />;
+<div prop:foo={{}}/>;
+<div prop:foo={[]}/>;
+<div prop:hello="world" />;
+<div prop:hello={`hello ${user}`} />;
 <div attr:test="value" />;
 <div attr:foo="value" attr:bar={1} />;
-<div prop:foo={{}}/>;
 <div attr:foo={'hello'} prop:bar-baz={{}} />;
 <div attr:foo={data} prop:bar-baz={data} />;
-<div prop:hello="world" />;
+<div attr:foo={`hello ${user }`} />;
 <button type="submit" onclick={handleClick} />;
 <div style="color: red; background-color: blue;" />;
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;

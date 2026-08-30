@@ -56,3 +56,19 @@ import { svgNs } from "jsx-dom-runtime";
     "data-test": "true",
     _: _svgNs
 });
+/*#__PURE__*/ _jsx("text", {
+    ref: (e)=>e.foo = {},
+    _: _svgNs
+});
+/*#__PURE__*/ _jsx("text", {
+    ref: (e)=>e.foo = [],
+    _: _svgNs
+});
+/*#__PURE__*/ _jsx("text", {
+    ref: (e)=>e.hello = "world",
+    _: _svgNs
+});
+/*#__PURE__*/ _jsx("text", {
+    ref: (e)=>e.hello = `hello ${user}`,
+    _: _svgNs
+});

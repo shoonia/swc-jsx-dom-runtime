@@ -6,3 +6,7 @@ import { mathmlNs } from "jsx-dom-runtime";
 <mi><a href="https://example.com" /></mi>;
 <mi><a href="https://example.com" /><a href="https://example.com" /></mi>;
 <a _={mathmlNs} />;
+<math prop:foo={{}}/>;
+<math prop:foo={[]}/>;
+<math prop:hello="world" />;
+<math prop:hello={`hello ${user}`} />;
