@@ -5,7 +5,7 @@ use crate::import_manager::*;
 use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
 use core::hint::unreachable_unchecked;
 use std::vec;
-use swc_core::common::{comments::Comments, errors::HANDLER, Span, Spanned};
+use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
@@ -112,7 +112,7 @@ impl<C: Comments> JsxTransformer<C> {
                         JSXAttrName::JSXNamespacedName(namespaced) => {
                             &convert_jsx_namespaced_name(namespaced)
                         }
-                        _ => unsafe { unreachable_unchecked() },
+                        _ => None?,
                     };
 
                     Some(prop(prop_key(key), self.convert_jsx_attr_value(attr)))
@@ -149,13 +149,10 @@ impl<C: Comments> JsxTransformer<C> {
                         props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
                     }
 
-                    call_expr(
-                        Expr::Ident(ident.clone()),
-                        vec![prop_expr(object_expr(props))],
-                    )
+                    call_expr(ident.clone().into(), vec![prop_expr(object_expr(props))])
                 } else {
                     let mut args = vec![
-                        prop_expr(str_expr(ident.sym.clone().into())),
+                        prop_expr(ident.sym.clone().into()),
                         prop_expr(object_expr(props)),
                     ];
 
@@ -179,7 +176,7 @@ impl<C: Comments> JsxTransformer<C> {
             }
             JSXElementName::JSXNamespacedName(name) => {
                 let mut args = vec![
-                    prop_expr(str_expr(convert_jsx_namespaced_name(name).into())),
+                    prop_expr(convert_jsx_namespaced_name(name).into()),
                     prop_expr(object_expr(props)),
                 ];
 
@@ -197,9 +194,9 @@ impl<C: Comments> JsxTransformer<C> {
     fn convert_jsx_attr_value(&mut self, attr: &JSXAttr) -> Expr {
         match &attr.value {
             Some(value) => match value {
-                JSXAttrValue::Str(lit) => str_expr(transform_jsx_attr_str(
-                    lit.value.as_str().unwrap_or_default(),
-                )),
+                JSXAttrValue::Str(lit) => {
+                    transform_jsx_attr_str(lit.value.as_str().unwrap_or_default()).into()
+                }
                 JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
@@ -227,7 +224,7 @@ impl<C: Comments> JsxTransformer<C> {
                         return None;
                     }
 
-                    Some(prop_expr(str_expr(value)))
+                    Some(prop_expr(value.into()))
                 }
 
                 JSXElementChild::JSXElement(element) => {

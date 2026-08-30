@@ -13,5 +13,5 @@ use crate::jsx_transformer::JsxTransformer;
 
 #[plugin_transform]
 pub fn process_transform(program: Program, meta: TransformPluginProgramMetadata) -> Program {
-    program.apply(visit_mut_pass(JsxTransformer::new(Some(meta.comments))))
+    program.apply(visit_mut_pass(JsxTransformer::new(meta.comments)))
 }

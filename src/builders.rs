@@ -1,5 +1,4 @@
 use crate::consts::*;
-use swc_core::atoms::Wtf8Atom;
 use swc_core::common::{Span, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 
@@ -29,11 +28,6 @@ pub fn object_expr(props: Vec<PropOrSpread>) -> Expr {
         props,
     }
     .into()
-}
-
-#[inline(always)]
-pub fn str_expr(value: Wtf8Atom) -> Expr {
-    Str::from(value).into()
 }
 
 #[inline(always)]
@@ -159,7 +153,7 @@ pub fn set_attr_call_expr(key: &str, value: Expr) -> Expr {
             prop: IdentName::from("setAttribute").into(),
         }
         .into(),
-        vec![prop_expr(str_expr(key.into())), prop_expr(value)],
+        vec![prop_expr(key.into()), prop_expr(value)],
     )
 }
 
@@ -173,7 +167,7 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
             prop: if key.contains('-') {
                 ComputedPropName {
                     span: DUMMY_SP,
-                    expr: str_expr(key.into()).into(),
+                    expr: key.to_string().into(),
                 }
                 .into()
             } else {
