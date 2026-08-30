@@ -361,7 +361,6 @@ impl<C: Comments> JsxTransformer<C> {
                         "on" => {
                             let ev_name = namespaced.name.sym.as_str();
                             let lc_name = &ev_name.to_lowercase();
-
                             let name = if event_types(lc_name) {
                                 prop_ident(lc_name)
                             } else {
@@ -373,37 +372,35 @@ impl<C: Comments> JsxTransformer<C> {
                             continue;
                         }
                         "attr" => {
-                            remove_indexes.push(index);
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
-
-                            if let Expr::Lit(_) = value {
-                                compile_refs.push(set_attr_call_expr(name, value));
-                            } else {
-                                compile_refs.push(signalish_attr(
+                            let ref_expr = match value {
+                                Expr::Lit(_) => set_attr_call_expr(name, value),
+                                _ => signalish_attr(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
-                                ))
-                            }
+                                ),
+                            };
 
+                            remove_indexes.push(index);
+                            compile_refs.push(ref_expr);
                             continue;
                         }
                         "prop" => {
-                            remove_indexes.push(index);
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
-
-                            if let Expr::Lit(_) = value {
-                                compile_refs.push(prop_assignment_expr(name, value));
-                            } else {
-                                compile_refs.push(signalish_prop(
+                            let ref_expr = match value {
+                                Expr::Lit(_) => prop_assignment_expr(name, value),
+                                _ => signalish_prop(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
-                                ))
-                            }
+                                ),
+                            };
 
+                            remove_indexes.push(index);
+                            compile_refs.push(ref_expr);
                             continue;
                         }
                         _ => {}
