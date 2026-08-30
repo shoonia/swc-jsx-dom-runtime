@@ -201,9 +201,9 @@ impl<C: Comments> JsxTransformer<C> {
     fn convert_jsx_attr_value(&mut self, attr: &JSXAttr) -> Expr {
         match &attr.value {
             Some(value) => match value {
-                JSXAttrValue::Str(lit) => {
-                    str_expr(transform_jsx_attr_str(lit.value.as_str().unwrap()))
-                }
+                JSXAttrValue::Str(lit) => str_expr(transform_jsx_attr_str(
+                    lit.value.as_str().unwrap_or_default(),
+                )),
                 JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
