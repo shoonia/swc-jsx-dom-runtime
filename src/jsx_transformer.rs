@@ -2,7 +2,7 @@ use crate::builders::*;
 use crate::collections::*;
 use crate::consts::*;
 use crate::import_manager::*;
-use crate::jsx_text_to_str_with_raw::jsx_text_to_str_with_raw;
+use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
 use core::hint::unreachable_unchecked;
 use std::vec;
 use swc_core::common::{comments::Comments, errors::HANDLER, Span, Spanned};
@@ -201,7 +201,9 @@ impl<C: Comments> JsxTransformer<C> {
     fn convert_jsx_attr_value(&mut self, attr: &JSXAttr) -> Expr {
         match &attr.value {
             Some(value) => match value {
-                JSXAttrValue::Str(lit) => str_expr(lit.value.clone()),
+                JSXAttrValue::Str(lit) => {
+                    str_expr(transform_jsx_attr_str(lit.value.as_str().unwrap()))
+                }
                 JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),

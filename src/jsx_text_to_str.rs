@@ -669,3 +669,47 @@ fn add_line_of_jsx_text<'a>(
         *only_line = Some(trimmed_line);
     }
 }
+
+pub fn transform_jsx_attr_str(v: &str) -> Wtf8Atom {
+    let single_quote = false;
+    let mut buf = String::with_capacity(v.len());
+    let mut iter = v.chars().peekable();
+
+    while let Some(ch) = iter.next() {
+        match ch {
+            // '\u{0008}' => buf.push_str("\\b"),
+            // '\u{000c}' => buf.push_str("\\f"),
+            // ' ' => buf.push_char(' '),
+            '\n' | '\r' | '\t' => {
+                buf.push(' ');
+
+                while let Some(next) = iter.peek() {
+                    if *next == ' ' {
+                        iter.next();
+                    } else {
+                        break;
+                    }
+                }
+            }
+            // '\u{000b}' => buf.push_str("\\v"),
+            // '\0' => buf.push_str("\\x00"),
+            '\'' if single_quote => buf.push_str("\\'"),
+            '"' if !single_quote => buf.push_str("\\\""),
+
+            // '\x01'..='\x0f' | '\x10'..='\x1f' => {
+            //     buf.push_char(ch);
+            // }
+
+            // '\x20'..='\x7e' => {
+            //     //
+            //     buf.push_char(ch);
+            // }
+            // '\u{7f}'..='\u{ff}' => {
+            //     buf.push_char(ch);
+            // }
+            _ => buf.push(ch),
+        }
+    }
+
+    buf.into()
+}

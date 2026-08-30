@@ -29,8 +29,15 @@
 <div ref={e => e.focus()} />;
 <div ref={e => e.focus()} attr:test="value" prop:foo="bar" style={style} attributes={attrs} onclick={handleClick} />;
 <div children={<span />} />;
+<code children=<span /> />;
 <div children={<><small /><strong /></>} />;
 <div children={<Component />} />;
 <em children={10} />;
 <li children="1" children="2" />;
-<ol children="skip">used</ol>
+<ol children="skip">used</ol>;
+<img alt="
+        text
+" />;
+<img alt='
+        text
+' />;

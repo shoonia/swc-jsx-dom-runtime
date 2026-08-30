@@ -122,6 +122,7 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
     ]
 });
 /*#__PURE__*/ _jsx("div", {}, _jsx("span", {}));
+/*#__PURE__*/ _jsx("code", {}, _jsx("span", {}));
 /*#__PURE__*/ _jsx("div", {}, [
     _jsx("small", {}),
     _jsx("strong", {})
@@ -130,3 +131,9 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
 /*#__PURE__*/ _jsx("em", {}, 10);
 /*#__PURE__*/ _jsx("li", {}, "2");
 /*#__PURE__*/ _jsx("ol", {}, "used");
+/*#__PURE__*/ _jsx("img", {
+    alt: " text "
+});
+/*#__PURE__*/ _jsx("img", {
+    alt: " text "
+});
