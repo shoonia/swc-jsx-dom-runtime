@@ -2,7 +2,6 @@ use crate::consts::*;
 use swc_core::atoms::Wtf8Atom;
 use swc_core::common::{util::take::Take, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
-use swc_core::ecma::utils::is_valid_prop_ident;
 
 #[inline]
 pub fn null_expr() -> Expr {
@@ -58,10 +57,10 @@ pub fn prop_ident(key: &str) -> PropName {
 
 #[inline]
 pub fn prop_key(key: &str) -> PropName {
-    if is_valid_prop_ident(key) {
-        prop_ident(key)
-    } else {
+    if key.contains('-') {
         PropName::Str(Str::from(key))
+    } else {
+        prop_ident(key)
     }
 }
 
@@ -158,13 +157,13 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
         left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
             span: DUMMY_SP,
             obj: Box::new(ref_param()),
-            prop: if is_valid_prop_ident(key) {
-                MemberProp::Ident(IdentName::from(key))
-            } else {
+            prop: if key.contains('-') {
                 MemberProp::Computed(ComputedPropName {
                     span: DUMMY_SP,
                     expr: Box::new(str_expr(key.into())),
                 })
+            } else {
+                MemberProp::Ident(IdentName::from(key))
             },
         })),
         right: Box::new(value),
