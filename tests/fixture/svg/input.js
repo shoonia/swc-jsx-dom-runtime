@@ -8,3 +8,5 @@ import { svgNs } from "jsx-dom-runtime";
 <path><a href="https://example.com" /></path>;
 <path><a href="https://example.com" /><a href="https://example.com" /></path>;
 <a _={svgNs} />;
+<animateTransform onclick={handler} />;
+<text data-test />;

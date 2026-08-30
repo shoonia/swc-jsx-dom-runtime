@@ -315,8 +315,8 @@ impl<C: Comments> JsxTransformer<C> {
                     if scope.is_svg {
                         if let Some(a) = svg_dom_attribute(attr_name) {
                             attr.name = jsx_attr_name(a);
+                            continue;
                         }
-                        continue;
                     }
 
                     let name = attr_name.to_lowercase();

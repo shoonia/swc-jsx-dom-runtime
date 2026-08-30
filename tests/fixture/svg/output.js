@@ -48,3 +48,11 @@ import { svgNs } from "jsx-dom-runtime";
 /*#__PURE__*/ _jsx("a", {
     _: svgNs
 });
+/*#__PURE__*/ _jsx("animateTransform", {
+    ref: (e)=>e.onclick = handler,
+    _: _svgNs
+});
+/*#__PURE__*/ _jsx("text", {
+    "data-test": "true",
+    _: _svgNs
+});
