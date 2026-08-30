@@ -29,18 +29,19 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
     true
 }
 
-fn convert_jsx_member(jsx_memeber: JSXMemberExpr) -> Expr {
-    let obj_expr = match jsx_memeber.obj {
-        JSXObject::Ident(ident) => Expr::Ident(ident),
+fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
+    let obj_expr: Expr = match memeber.obj {
+        JSXObject::Ident(ident) => ident.into(),
         JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
         _ => unsafe { unreachable_unchecked() },
     };
 
-    Expr::Member(MemberExpr {
-        span: jsx_memeber.span,
+    MemberExpr {
+        span: memeber.span,
         obj: Box::new(obj_expr),
-        prop: MemberProp::Ident(jsx_memeber.prop),
-    })
+        prop: memeber.prop.into(),
+    }
+    .into()
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
@@ -122,12 +123,13 @@ impl<C: Comments> JsxTransformer<C> {
 
                     Some(prop(prop_key(key), self.convert_jsx_attr_value(attr)))
                 }
-                JSXAttrOrSpread::SpreadElement(spread) => {
-                    Some(PropOrSpread::Spread(SpreadElement {
+                JSXAttrOrSpread::SpreadElement(spread) => Some(
+                    SpreadElement {
                         dot3_token: spread.dot3_token,
                         expr: spread.expr.clone(),
-                    }))
-                }
+                    }
+                    .into(),
+                ),
                 _ => None,
             })
             .collect()
@@ -462,12 +464,13 @@ impl<C: Comments> JsxTransformer<C> {
             let last_children = children_props.pop().unwrap();
             let value = self.convert_jsx_attr_value(&last_children);
 
-            element
-                .children
-                .push(JSXElementChild::JSXExprContainer(JSXExprContainer {
+            element.children.push(
+                JSXExprContainer {
                     span: last_children.span,
-                    expr: JSXExpr::Expr(Box::new(value)),
-                }));
+                    expr: Box::new(value).into(),
+                }
+                .into(),
+            );
         }
 
         if no_ns {

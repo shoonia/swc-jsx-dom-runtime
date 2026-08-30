@@ -58,21 +58,23 @@ impl ImportManager {
         let index = import_name.index();
 
         if let Some(ident) = &self.cache[index] {
-            return Expr::Ident(ident.clone());
+            return ident.clone().into();
         }
 
         let local_ident = Ident::from(format!("_{}", import_name.as_str()));
 
         self.cache[index] = Some(local_ident.clone());
-        self.specifiers
-            .push(ImportSpecifier::Named(ImportNamedSpecifier {
+        self.specifiers.push(
+            ImportNamedSpecifier {
                 span: DUMMY_SP,
                 local: local_ident.clone(),
-                imported: Some(ModuleExportName::Ident(Ident::from(import_name.as_str()))),
+                imported: Some(Ident::from(import_name.as_str()).into()),
                 is_type_only: false,
-            }));
+            }
+            .into(),
+        );
 
-        Expr::Ident(local_ident)
+        local_ident.into()
     }
 
     pub fn inject_into_module(&self, module: &mut Module) {
@@ -82,14 +84,15 @@ impl ImportManager {
 
         module.body.insert(
             0,
-            ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+            ImportDecl {
                 span: DUMMY_SP,
                 specifiers: self.specifiers.clone(),
-                src: Box::new(Str::from("jsx-dom-runtime")),
+                src: Str::from("jsx-dom-runtime").into(),
                 type_only: false,
                 with: None,
                 phase: ImportPhase::Evaluation,
-            })),
+            }
+            .into(),
         );
     }
 }
