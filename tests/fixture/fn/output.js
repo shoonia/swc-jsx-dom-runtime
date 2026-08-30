@@ -1,12 +1,12 @@
 import { jsx as _jsx } from "jsx-dom-runtime";
 App({});
 App({
-    children: _jsx("div", {})
+    children: /*#__PURE__*/ _jsx("div", {})
 });
 App({
     children: [
-        _jsx("div", {}),
-        _jsx("div", {})
+        /*#__PURE__*/ _jsx("div", {}),
+        /*#__PURE__*/ _jsx("div", {})
     ]
 });
 App({

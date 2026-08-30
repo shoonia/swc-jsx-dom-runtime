@@ -3,12 +3,12 @@ Hello.World({});
 A.B.C.D({});
 lowercase.member({});
 Member.Exp({
-    children: _jsx("div", {})
+    children: /*#__PURE__*/ _jsx("div", {})
 });
 Member.Exp({
     children: [
-        _jsx("div", {}),
-        _jsx("span", {})
+        /*#__PURE__*/ _jsx("div", {}),
+        /*#__PURE__*/ _jsx("span", {})
     ]
 });
 A.B({

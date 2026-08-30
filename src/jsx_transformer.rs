@@ -85,13 +85,13 @@ struct NodeScope {
 }
 
 pub struct JsxTransformer<C: Comments> {
-    comments: Option<C>,
+    comments: C,
     imports: ImportManager,
     parent_scope: ParentScope,
 }
 
 impl<C: Comments> JsxTransformer<C> {
-    pub fn new(comments: Option<C>) -> Self {
+    pub fn new(comments: C) -> Self {
         Self {
             comments,
             imports: ImportManager::new(),
@@ -99,12 +99,6 @@ impl<C: Comments> JsxTransformer<C> {
                 is_svg: false,
                 is_mathml: false,
             },
-        }
-    }
-
-    fn add_pure_comment(&self, span: Span) {
-        if let Some(comments) = self.comments.as_ref() {
-            comments.add_pure_comment(span.lo);
         }
     }
 
@@ -169,8 +163,8 @@ impl<C: Comments> JsxTransformer<C> {
                         args.push(prop_expr(children_expr(children)));
                     }
 
-                    self.add_pure_comment(element.span);
-                    call_expr(self.imports.add(ImportName::Jsx), args)
+                    self.comments.add_pure_comment(element.span.lo);
+                    call_expr_with_span(self.imports.add(ImportName::Jsx), args, element.span)
                 }
             }
             JSXElementName::JSXMemberExpr(jsx_memeber) => {
@@ -193,8 +187,8 @@ impl<C: Comments> JsxTransformer<C> {
                     args.push(prop_expr(children_expr(children)));
                 }
 
-                self.add_pure_comment(element.span);
-                call_expr(self.imports.add(ImportName::Jsx), args)
+                self.comments.add_pure_comment(element.span.lo);
+                call_expr_with_span(self.imports.add(ImportName::Jsx), args, element.span)
             }
             _ => unsafe { unreachable_unchecked() },
         }

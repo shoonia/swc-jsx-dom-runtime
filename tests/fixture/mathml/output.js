@@ -9,28 +9,28 @@ import { mathmlNs } from "jsx-dom-runtime";
 });
 /*#__PURE__*/ _jsx("math", {
     _: _mathmlNs
-}, _jsx("a", {
+}, /*#__PURE__*/ _jsx("a", {
     _: _mathmlNs
 }));
 /*#__PURE__*/ _jsx("math", {
     _: _mathmlNs
-}, check ? _jsx("a", {
+}, check ? /*#__PURE__*/ _jsx("a", {
     _: _mathmlNs
 }) : null);
 /*#__PURE__*/ _jsx("mi", {
     _: _mathmlNs
-}, _jsx("a", {
+}, /*#__PURE__*/ _jsx("a", {
     href: "https://example.com",
     _: _mathmlNs
 }));
 /*#__PURE__*/ _jsx("mi", {
     _: _mathmlNs
 }, [
-    _jsx("a", {
+    /*#__PURE__*/ _jsx("a", {
         href: "https://example.com",
         _: _mathmlNs
     }),
-    _jsx("a", {
+    /*#__PURE__*/ _jsx("a", {
         href: "https://example.com",
         _: _mathmlNs
     })

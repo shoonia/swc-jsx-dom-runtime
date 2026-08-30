@@ -1,6 +1,6 @@
 use crate::consts::*;
 use swc_core::atoms::Wtf8Atom;
-use swc_core::common::{SyntaxContext, DUMMY_SP};
+use swc_core::common::{Span, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
 
 #[inline(always)]
@@ -42,15 +42,20 @@ pub fn prop_expr(expr: Expr) -> ExprOrSpread {
 }
 
 #[inline]
-pub fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
+pub fn call_expr_with_span(callee: Expr, args: Vec<ExprOrSpread>, span: Span) -> Expr {
     CallExpr {
-        span: DUMMY_SP,
+        span,
         callee: Box::new(callee).into(),
         args,
         type_args: None,
         ctxt: SyntaxContext::empty(),
     }
     .into()
+}
+
+#[inline(always)]
+pub fn call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
+    call_expr_with_span(callee, args, DUMMY_SP)
 }
 
 #[inline(always)]

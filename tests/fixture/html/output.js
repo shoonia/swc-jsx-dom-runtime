@@ -1,12 +1,12 @@
 import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setAttributes as _setAttributes, setDataset as _setDataset } from "jsx-dom-runtime";
 /*#__PURE__*/ _jsx("div", {});
 /*#__PURE__*/ _jsx("button", {});
-/*#__PURE__*/ _jsx("p", {}, _jsx("span", {}));
+/*#__PURE__*/ _jsx("p", {}, /*#__PURE__*/ _jsx("span", {}));
 /*#__PURE__*/ _jsx("p", {}, [
-    _jsx("span", {}),
-    _jsx("strong", {})
+    /*#__PURE__*/ _jsx("span", {}),
+    /*#__PURE__*/ _jsx("strong", {})
 ]);
-/*#__PURE__*/ _jsx("div", {}, _jsx("p", {}, _jsx("span", {}, "hello")));
+/*#__PURE__*/ _jsx("div", {}, /*#__PURE__*/ _jsx("p", {}, /*#__PURE__*/ _jsx("span", {}, "hello")));
 /*#__PURE__*/ _jsx("div", {
     tabindex: 0
 });
@@ -121,11 +121,11 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
         }
     ]
 });
-/*#__PURE__*/ _jsx("div", {}, _jsx("span", {}));
-/*#__PURE__*/ _jsx("code", {}, _jsx("span", {}));
+/*#__PURE__*/ _jsx("div", {}, /*#__PURE__*/ _jsx("span", {}));
+/*#__PURE__*/ _jsx("code", {}, /*#__PURE__*/ _jsx("span", {}));
 /*#__PURE__*/ _jsx("div", {}, [
-    _jsx("small", {}),
-    _jsx("strong", {})
+    /*#__PURE__*/ _jsx("small", {}),
+    /*#__PURE__*/ _jsx("strong", {})
 ]);
 /*#__PURE__*/ _jsx("div", {}, Component({}));
 /*#__PURE__*/ _jsx("em", {}, 10);

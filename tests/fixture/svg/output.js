@@ -17,30 +17,30 @@ import { svgNs } from "jsx-dom-runtime";
 });
 /*#__PURE__*/ _jsx("svg", {
     _: _svgNs
-}, _jsx("a", {
+}, /*#__PURE__*/ _jsx("a", {
     _: _svgNs
 }));
 /*#__PURE__*/ _jsx("svg", {
     _: _svgNs
-}, check ? _jsx("a", {
+}, check ? /*#__PURE__*/ _jsx("a", {
     _: _svgNs
-}) : _jsx("path", {
+}) : /*#__PURE__*/ _jsx("path", {
     _: _svgNs
 }));
 /*#__PURE__*/ _jsx("path", {
     _: _svgNs
-}, _jsx("a", {
+}, /*#__PURE__*/ _jsx("a", {
     href: "https://example.com",
     _: _svgNs
 }));
 /*#__PURE__*/ _jsx("path", {
     _: _svgNs
 }, [
-    _jsx("a", {
+    /*#__PURE__*/ _jsx("a", {
         href: "https://example.com",
         _: _svgNs
     }),
-    _jsx("a", {
+    /*#__PURE__*/ _jsx("a", {
         href: "https://example.com",
         _: _svgNs
     })
