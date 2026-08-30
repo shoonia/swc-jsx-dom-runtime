@@ -83,16 +83,11 @@ pub fn jsx_attr_val_str(value: &str) -> Option<JSXAttrValue> {
     Some(Str::from(value).into())
 }
 
-#[inline(always)]
-pub fn jsx_attr_name(name: &str) -> JSXAttrName {
-    IdentName::from(name).into()
-}
-
 #[inline]
 pub fn jsx_attr(name: &str, value: Expr) -> JSXAttrOrSpread {
     JSXAttr {
         span: DUMMY_SP,
-        name: jsx_attr_name(name),
+        name: IdentName::from(name).into(),
         value: Some(
             JSXExprContainer {
                 span: DUMMY_SP,

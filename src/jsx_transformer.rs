@@ -270,7 +270,7 @@ impl<C: Comments> JsxTransformer<C> {
             }
 
             if let JSXAttrOrSpread::JSXAttr(attr) = attr {
-                if let JSXAttrName::Ident(ident) = &attr.name {
+                if let JSXAttrName::Ident(ident) = &mut attr.name {
                     let attr_name = ident.sym.as_str();
 
                     match attr_name {
@@ -322,13 +322,13 @@ impl<C: Comments> JsxTransformer<C> {
                     }
 
                     if let Some(a) = html_dom_attribute(attr_name) {
-                        attr.name = jsx_attr_name(a);
+                        ident.sym = a.into();
                         continue;
                     }
 
                     if scope.is_svg {
                         if let Some(a) = svg_dom_attribute(attr_name) {
-                            attr.name = jsx_attr_name(a);
+                            ident.sym = a.into();
                             continue;
                         }
                     }
@@ -336,7 +336,7 @@ impl<C: Comments> JsxTransformer<C> {
                     let name = attr_name.to_lowercase();
 
                     if scope.is_html && name != attr_name {
-                        attr.name = jsx_attr_name(&name);
+                        ident.sym = name.clone().into();
                     }
 
                     if is_bool_attr(&name) {
