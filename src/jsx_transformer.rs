@@ -2,6 +2,7 @@ use crate::builders::*;
 use crate::collections::*;
 use crate::consts::*;
 use crate::import_manager::*;
+use crate::jsx_text_to_str_with_raw::jsx_text_to_str_with_raw;
 use core::hint::unreachable_unchecked;
 use std::vec;
 use swc_core::common::{comments::Comments, errors::HANDLER, Span, Spanned};
@@ -221,7 +222,16 @@ impl<C: Comments> JsxTransformer<C> {
                     spread: Some(spread.span),
                     expr: spread.expr.clone(),
                 }),
-                JSXElementChild::JSXText(text) => Some(prop_expr(str_expr(text.value.clone()))),
+                JSXElementChild::JSXText(text) => {
+                    let value = jsx_text_to_str_with_raw(&text.value, &text.raw);
+
+                    if value.is_empty() {
+                        return None;
+                    }
+
+                    Some(prop_expr(str_expr(value)))
+                }
+
                 JSXElementChild::JSXElement(element) => {
                     Some(prop_expr(self.transform_element(element.as_ref())))
                 }

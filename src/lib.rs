@@ -6,6 +6,7 @@ mod builders;
 mod collections;
 mod consts;
 mod import_manager;
+mod jsx_text_to_str_with_raw;
 pub mod jsx_transformer;
 
 use crate::jsx_transformer::JsxTransformer;
