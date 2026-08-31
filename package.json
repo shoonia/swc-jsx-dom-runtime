@@ -1,18 +1,52 @@
 {
   "name": "swc-jsx-dom-runtime",
   "version": "0.1.0",
-  "description": "",
-  "author": "",
-  "license": "ISC",
+  "description": "An SWC plugin that compiles JSX into optimized jsx-dom-runtime calls for direct DOM rendering",
+  "author": {
+    "name": "Alexander Zaytsev",
+    "email": "zaytsev126@gmail.com",
+    "url": "https://x.com/_shoonia"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shoonia/swc-jsx-dom-runtime.git"
+  },
+  "homepage": "https://github.com/shoonia/swc-jsx-dom-runtime#readme",
+  "bugs": {
+    "url": "https://github.com/shoonia/swc-jsx-dom-runtime/issues"
+  },
   "keywords": [
-    "swc-plugin"
+    "swc",
+    "swc-plugin",
+    "jsx",
+    "dom",
+    "wasm"
   ],
   "main": "target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm",
+  "exports": {
+    ".": "./target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm"
+  },
+  "peerDependencies": {
+    "@swc/core": "^1.15.0",
+    "jsx-dom-runtime": "^0.84.0"
+  },
+  "peerDependenciesMeta": {
+    "@swc/core": {
+      "optional": true
+    }
+  },
   "scripts": {
     "build": "cargo build-wasip1 --release",
-    "test": "cargo clean && cargo test",
-    "fixture": "UPDATE=1 cargo test --test fixture"
+    "test": "cargo test",
+    "fixture": "UPDATE=1 cargo test --test fixture",
+    "prepack": "npm test && npm run build"
   },
-  "files": [],
+  "files": [
+    "target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "preferUnplugged": true
 }

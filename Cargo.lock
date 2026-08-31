@@ -1165,7 +1165,6 @@ dependencies = [
 name = "swc-jsx-dom-runtime"
 version = "0.1.0"
 dependencies = [
- "serde",
  "swc_core",
  "testing",
 ]
