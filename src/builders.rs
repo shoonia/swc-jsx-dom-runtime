@@ -1,6 +1,7 @@
 use crate::consts::*;
 use swc_core::common::{Span, SyntaxContext, DUMMY_SP};
 use swc_core::ecma::ast::*;
+use swc_core::ecma::utils::is_valid_prop_ident;
 
 #[inline(always)]
 pub fn null_expr() -> Expr {
@@ -59,10 +60,10 @@ pub fn prop_ident(key: &str) -> PropName {
 
 #[inline]
 pub fn prop_key(key: &str) -> PropName {
-    if key.contains('-') {
-        Str::from(key).into()
-    } else {
+    if is_valid_prop_ident(key) {
         IdentName::from(key).into()
+    } else {
+        Str::from(key).into()
     }
 }
 
@@ -164,14 +165,14 @@ pub fn prop_assignment_expr(key: &str, value: Expr) -> Expr {
         left: MemberExpr {
             span: DUMMY_SP,
             obj: ref_param().into(),
-            prop: if key.contains('-') {
+            prop: if is_valid_prop_ident(key) {
+                IdentName::from(key).into()
+            } else {
                 ComputedPropName {
                     span: DUMMY_SP,
                     expr: key.to_string().into(),
                 }
                 .into()
-            } else {
-                IdentName::from(key).into()
             },
         }
         .into(),
