@@ -213,6 +213,7 @@ impl<C: Comments> JsxTransformer<C> {
                 JSXElementChild::JSXExprContainer(container) => match &container.expr {
                     JSXExpr::Expr(expr) => Some(prop_expr(expr.as_ref().clone())),
                     JSXExpr::JSXEmptyExpr(_) => None,
+                    _ => None,
                 },
                 JSXElementChild::JSXSpreadChild(spread) => Some(ExprOrSpread {
                     spread: Some(spread.span),
