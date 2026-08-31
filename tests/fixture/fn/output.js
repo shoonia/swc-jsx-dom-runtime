@@ -57,3 +57,6 @@ App({
 Boo({
     className: "my-class"
 });
+App({
+    children: /*#__PURE__*/ _jsx("span", {})
+});

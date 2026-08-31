@@ -56,18 +56,18 @@ fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
     }
 }
 
-fn children_expr(elems: Vec<Option<ExprOrSpread>>) -> Expr {
+fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
     if elems.len() == 1 {
         match &elems[0] {
-            Some(ExprOrSpread {
+            ExprOrSpread {
                 spread: Some(_),
                 expr: _,
-            }) => array_expr(elems),
-            Some(ExprOrSpread { spread: None, expr }) => expr.as_ref().clone(),
-            None => null_expr(),
+            } => array_expr(elems.into_iter().map(Some).collect()),
+            ExprOrSpread { spread: None, expr } => expr.as_ref().clone(),
+            _ => unsafe { unreachable_unchecked() },
         }
     } else {
-        array_expr(elems)
+        array_expr(elems.into_iter().map(Some).collect())
     }
 }
 
@@ -206,13 +206,14 @@ impl<C: Comments> JsxTransformer<C> {
         }
     }
 
-    fn build_children(&mut self, children: &Vec<JSXElementChild>) -> Vec<Option<ExprOrSpread>> {
+    fn build_children(&mut self, children: &[JSXElementChild]) -> Vec<ExprOrSpread> {
         children
             .iter()
-            .map(|child| match child {
-                JSXElementChild::JSXExprContainer(container) => {
-                    Some(prop_expr(convert_jsx_container(container)))
-                }
+            .filter_map(|child| match child {
+                JSXElementChild::JSXExprContainer(container) => match &container.expr {
+                    JSXExpr::Expr(expr) => Some(prop_expr(expr.as_ref().clone())),
+                    JSXExpr::JSXEmptyExpr(_) => None,
+                },
                 JSXElementChild::JSXSpreadChild(spread) => Some(ExprOrSpread {
                     spread: Some(spread.span),
                     expr: spread.expr.clone(),

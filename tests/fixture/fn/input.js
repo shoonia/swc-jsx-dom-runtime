@@ -8,3 +8,7 @@
 <App name:space-prop="value" />;
 <App camelCase={null} />;
 <Boo className="my-class" />;
+<App>
+  {/* ignored */}
+  <span />
+</App>;
