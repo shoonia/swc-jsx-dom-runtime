@@ -354,7 +354,11 @@ impl<C: Comments> JsxTransformer<C> {
                     if name.starts_with("on") {
                         remove_indexes.push(index);
                         compile_refs.push(prop_assignment_expr(
-                            &name,
+                            if name == "ondoubleclick" {
+                                "ondblclick"
+                            } else {
+                                &name
+                            },
                             self.convert_jsx_attr_value(attr),
                         ));
                         continue;
