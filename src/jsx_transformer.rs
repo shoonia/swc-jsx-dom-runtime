@@ -4,7 +4,7 @@ use crate::consts::*;
 use crate::import_manager::*;
 use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
 use core::hint::unreachable_unchecked;
-use std::vec;
+use std::{iter, vec};
 use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
@@ -221,10 +221,10 @@ impl<C: Comments> JsxTransformer<C> {
                     let value = jsx_text_to_str_with_raw(&text.value, &text.raw);
 
                     if value.is_empty() {
-                        return None;
+                        None
+                    } else {
+                        Some(prop_expr(value.into()))
                     }
-
-                    Some(prop_expr(value.into()))
                 }
 
                 JSXElementChild::JSXElement(element) => {
@@ -435,8 +435,9 @@ impl<C: Comments> JsxTransformer<C> {
         let refs = if compile_refs.is_empty() {
             user_refs
         } else {
-            user_refs.push(create_ref_cb(compile_refs));
-            user_refs
+            iter::once(create_ref_cb(compile_refs))
+                .chain(user_refs)
+                .collect()
         };
 
         if !refs.is_empty() {
