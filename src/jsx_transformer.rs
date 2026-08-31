@@ -38,7 +38,7 @@ fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
 
     MemberExpr {
         span: memeber.span,
-        obj: Box::new(obj_expr),
+        obj: obj_expr.into(),
         prop: memeber.prop.into(),
     }
     .into()
@@ -247,9 +247,7 @@ impl<C: Comments> JsxTransformer<C> {
         let mut children_props = Vec::<JSXAttr>::new();
         let mut no_ns = true;
 
-        for zip_attr in node.attrs.iter_mut().enumerate() {
-            let (index, attr) = zip_attr;
-
+        for (index, attr) in node.attrs.iter_mut().enumerate() {
             if let JSXAttrOrSpread::SpreadElement(spread) = attr {
                 HANDLER.with(|handler| {
                     handler
