@@ -1,6 +1,7 @@
 use std::array;
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
+use swc_core::ecma::utils::private_ident;
 
 #[derive(Clone, Copy)]
 pub enum ImportName {
@@ -61,7 +62,7 @@ impl ImportManager {
             return ident.clone().into();
         }
 
-        let local_ident = Ident::from(format!("_{}", import_name.as_str()));
+        let local_ident = private_ident!(format!("_{}", import_name.as_str()));
 
         self.cache[index] = Some(local_ident.clone());
         self.specifiers.push(
