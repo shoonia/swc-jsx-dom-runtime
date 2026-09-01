@@ -10,7 +10,7 @@ pub fn null_expr() -> Expr {
 
 #[inline(always)]
 pub fn bool_expr(value: bool) -> Expr {
-    Bool::from(value).into()
+    value.into()
 }
 
 #[inline(always)]
@@ -33,7 +33,7 @@ pub fn object_expr(props: Vec<PropOrSpread>) -> Expr {
 
 #[inline(always)]
 pub fn prop_expr(expr: Expr) -> ExprOrSpread {
-    Box::new(expr).into()
+    expr.into()
 }
 
 #[inline]
@@ -129,7 +129,7 @@ pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
                 .map(|expr| {
                     ExprStmt {
                         span: DUMMY_SP,
-                        expr: Box::new(expr),
+                        expr: expr.into(),
                     }
                     .into()
                 })

@@ -45,8 +45,7 @@ fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
 }
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
-    let name = format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name);
-    name
+    format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
 }
 
 fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
@@ -107,7 +106,7 @@ impl<C: Comments> JsxTransformer<C> {
         }
     }
 
-    fn build_props(&mut self, attributes: &Vec<JSXAttrOrSpread>) -> Vec<PropOrSpread> {
+    fn build_props(&mut self, attributes: &[JSXAttrOrSpread]) -> Vec<PropOrSpread> {
         attributes
             .iter()
             .filter_map(|attr| match attr {
@@ -462,7 +461,7 @@ impl<C: Comments> JsxTransformer<C> {
         }
 
         if !children_props.is_empty() && element.children.is_empty() {
-            let last_children = children_props.pop().unwrap();
+            let last_children = children_props.last().unwrap();
             let value = self.convert_jsx_attr_value(&last_children);
 
             element.children.push(
