@@ -12,3 +12,7 @@
   {/* ignored */}
   <span />
 </App>;
+<A item={<B />} />;
+<B c={<div />} />;
+<C d={<><div /><div /></>} />;
+<D e={<hello.world />} />;

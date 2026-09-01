@@ -49,13 +49,6 @@ fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
     name
 }
 
-fn convert_jsx_container(container: &JSXExprContainer) -> Expr {
-    match &container.expr {
-        JSXExpr::Expr(expr) => expr.as_ref().clone(),
-        _ => null_expr(),
-    }
-}
-
 fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
     if elems.len() == 1 {
         match &elems[0] {
@@ -99,6 +92,18 @@ impl<C: Comments> JsxTransformer<C> {
                 is_svg: false,
                 is_mathml: false,
             },
+        }
+    }
+
+    fn transform_expr(&mut self, expr: JSXExpr) -> Expr {
+        match expr {
+            JSXExpr::Expr(expr) => match expr.as_ref() {
+                Expr::JSXElement(element) => self.transform_element(element.as_ref()),
+                Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
+                Expr::JSXMember(memeber) => convert_jsx_member(memeber.clone()),
+                _ => expr.as_ref().clone(),
+            },
+            _ => null_expr(),
         }
     }
 
@@ -195,9 +200,10 @@ impl<C: Comments> JsxTransformer<C> {
         match &attr.value {
             Some(value) => match value {
                 JSXAttrValue::Str(lit) => {
-                    transform_jsx_attr_str(lit.value.as_str().unwrap_or_default()).into()
+                    let value = lit.value.as_str().unwrap_or_default();
+                    transform_jsx_attr_str(value).into()
                 }
-                JSXAttrValue::JSXExprContainer(container) => convert_jsx_container(container),
+                JSXAttrValue::JSXExprContainer(cntr) => self.transform_expr(cntr.expr.clone()),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
                 _ => unsafe { unreachable_unchecked() },
@@ -210,10 +216,9 @@ impl<C: Comments> JsxTransformer<C> {
         children
             .iter()
             .filter_map(|child| match child {
-                JSXElementChild::JSXExprContainer(container) => match &container.expr {
-                    JSXExpr::Expr(expr) => Some(prop_expr(expr.as_ref().clone())),
+                JSXElementChild::JSXExprContainer(container) => match container.expr {
                     JSXExpr::JSXEmptyExpr(_) => None,
-                    _ => None,
+                    _ => Some(prop_expr(self.transform_expr(container.expr.clone()))),
                 },
                 JSXElementChild::JSXSpreadChild(spread) => Some(ExprOrSpread {
                     spread: Some(spread.span),
