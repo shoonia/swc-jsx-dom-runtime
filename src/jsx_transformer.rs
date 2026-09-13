@@ -4,7 +4,7 @@ use crate::consts::*;
 use crate::import_manager::*;
 use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
 use core::hint::unreachable_unchecked;
-use std::{iter, vec};
+use std::{format, iter, vec};
 use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
@@ -20,7 +20,7 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
 
     if let JSXAttrValue::JSXExprContainer(container) = value {
         if let JSXExpr::Expr(expr) = &container.expr {
-            if let Expr::Lit(_) = expr.as_ref() {
+            if expr.is_lit() {
                 return false;
             }
         }
@@ -48,15 +48,13 @@ fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
     format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
 }
 
-fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
+fn children_expr(mut elems: Vec<ExprOrSpread>) -> Expr {
     if elems.len() == 1 {
-        match &elems[0] {
-            ExprOrSpread {
-                spread: Some(_),
-                expr: _,
-            } => array_expr(elems.into_iter().map(Some).collect()),
-            ExprOrSpread { spread: None, expr } => expr.as_ref().clone(),
-            _ => unsafe { unreachable_unchecked() },
+        let elem = elems.pop().unwrap();
+        if elem.spread.is_none() {
+            *elem.expr
+        } else {
+            array_expr(vec![Some(elem)])
         }
     } else {
         array_expr(elems.into_iter().map(Some).collect())

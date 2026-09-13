@@ -28,7 +28,7 @@
     ".": "./target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm"
   },
   "peerDependencies": {
-    "@swc/core": "^1.15.0",
+    "@swc/core": "^1.16.2",
     "jsx-dom-runtime": "^0.84.0"
   },
   "peerDependenciesMeta": {
@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "cargo build-wasip1 --release",
-    "test": "cargo test",
+    "test": "cargo test --all-targets --all-features",
     "fixture": "UPDATE=1 cargo test --test fixture",
     "prepack": "npm test && npm run build",
     "lint": "cargo clippy -- -D warnings"
