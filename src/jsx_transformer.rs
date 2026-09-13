@@ -3,8 +3,7 @@ use crate::collections::*;
 use crate::consts::*;
 use crate::import_manager::*;
 use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
-use core::hint::unreachable_unchecked;
-use std::{format, iter, vec};
+use std::{format, iter, todo, vec};
 use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
@@ -33,7 +32,8 @@ fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
     let obj_expr: Expr = match memeber.obj {
         JSXObject::Ident(ident) => ident.into(),
         JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
-        _ => unsafe { unreachable_unchecked() },
+        #[allow(unreachable_patterns)]
+        _ => todo!(),
     };
 
     MemberExpr {
@@ -98,7 +98,7 @@ impl<C: Comments> JsxTransformer<C> {
                 Expr::JSXElement(element) => self.transform_element(element.as_ref()),
                 Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
                 Expr::JSXMember(memeber) => convert_jsx_member(memeber.clone()),
-                _ => expr.as_ref().clone(),
+                _ => *expr,
             },
             _ => null_expr(),
         }
@@ -114,7 +114,8 @@ impl<C: Comments> JsxTransformer<C> {
                         JSXAttrName::JSXNamespacedName(namespaced) => {
                             &convert_jsx_namespaced_name(namespaced)
                         }
-                        _ => None?,
+                        #[allow(unreachable_patterns)]
+                        _ => todo!(),
                     };
 
                     Some(prop(prop_key(key), self.convert_jsx_attr_value(attr)))
@@ -126,6 +127,7 @@ impl<C: Comments> JsxTransformer<C> {
                     }
                     .into(),
                 ),
+                #[allow(unreachable_patterns)]
                 _ => None,
             })
             .collect()
@@ -189,7 +191,8 @@ impl<C: Comments> JsxTransformer<C> {
                 self.comments.add_pure_comment(element.span.lo);
                 call_expr_with_span(self.imports.add(ImportName::Jsx), args, element.span)
             }
-            _ => unsafe { unreachable_unchecked() },
+            #[allow(unreachable_patterns)]
+            _ => todo!(),
         }
     }
 
@@ -203,7 +206,8 @@ impl<C: Comments> JsxTransformer<C> {
                 JSXAttrValue::JSXExprContainer(cntr) => self.transform_expr(cntr.expr.clone()),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
-                _ => unsafe { unreachable_unchecked() },
+                #[allow(unreachable_patterns)]
+                _ => todo!(),
             },
             None => bool_expr(true),
         }
@@ -237,6 +241,7 @@ impl<C: Comments> JsxTransformer<C> {
                 JSXElementChild::JSXFragment(fragment) => {
                     Some(prop_expr(self.transform_fragment(fragment)))
                 }
+                #[allow(unreachable_patterns)]
                 _ => None,
             })
             .collect()
