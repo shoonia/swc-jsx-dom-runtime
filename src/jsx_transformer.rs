@@ -440,7 +440,7 @@ impl<C: Comments> JsxTransformer<C> {
             node.attrs.push(jsx_attr(EVENT_KEY, object_expr(events)));
         }
 
-        let refs = if compile_refs.is_empty() {
+        let mut refs = if compile_refs.is_empty() {
             user_refs
         } else {
             iter::once(create_ref_cb(compile_refs))
@@ -451,9 +451,10 @@ impl<C: Comments> JsxTransformer<C> {
         if !refs.is_empty() {
             node.attrs.push(jsx_attr(
                 REF_KEY,
-                match refs.len() {
-                    1 => refs.into_iter().next().unwrap(),
-                    _ => array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect()),
+                if refs.len() == 1 {
+                    refs.pop().unwrap()
+                } else {
+                    array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect())
                 },
             ));
         }

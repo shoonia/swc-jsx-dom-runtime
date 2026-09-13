@@ -119,10 +119,11 @@ fn arrow_fn_expr(param: Pat, body: ArrowFunctionBody) -> Expr {
     .into()
 }
 
-pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
-    let body = match refs.len() {
-        1 => ArrowFunctionBody::Expr(Box::new(refs.into_iter().next().unwrap())),
-        _ => ArrowFunctionBody::FunctionBody(FunctionBody {
+pub fn create_ref_cb(mut refs: Vec<Expr>) -> Expr {
+    let body = if refs.len() == 1 {
+        ArrowFunctionBody::Expr(Box::new(refs.pop().unwrap()))
+    } else {
+        ArrowFunctionBody::FunctionBody(FunctionBody {
             span: DUMMY_SP,
             stmts: refs
                 .into_iter()
@@ -134,7 +135,7 @@ pub fn create_ref_cb(refs: Vec<Expr>) -> Expr {
                     .into()
                 })
                 .collect(),
-        }),
+        })
     };
 
     arrow_fn_expr(arrow_fn_param(REF_PARAM_KEY), body)
