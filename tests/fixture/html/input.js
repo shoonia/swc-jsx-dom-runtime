@@ -35,6 +35,7 @@
 <em children={10} />;
 <li children="1" children="2" />;
 <ol children="skip">used</ol>;
+<div children={[1,2 [34, [5]]]} />;
 <img alt="
         text
 " />;
