@@ -98,7 +98,7 @@ impl<C: Comments> JsxTransformer<C> {
                 Expr::JSXElement(element) => self.transform_element(element.as_ref()),
                 Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
                 Expr::JSXMember(memeber) => convert_jsx_member(memeber.clone()),
-                _ => expr.as_ref().clone(),
+                _ => *expr,
             },
             _ => null_expr(),
         }
