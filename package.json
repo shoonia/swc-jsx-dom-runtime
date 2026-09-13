@@ -28,7 +28,7 @@
     ".": "./target/wasm32-wasip1/release/swc_jsx_dom_runtime.wasm"
   },
   "peerDependencies": {
-    "@swc/core": "^1.15.0",
+    "@swc/core": "^1.16.2",
     "jsx-dom-runtime": "^0.84.0"
   },
   "peerDependenciesMeta": {
