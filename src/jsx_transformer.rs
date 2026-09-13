@@ -4,7 +4,7 @@ use crate::consts::*;
 use crate::import_manager::*;
 use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
 use core::hint::unreachable_unchecked;
-use std::{iter, vec};
+use std::{format, iter, vec};
 use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
