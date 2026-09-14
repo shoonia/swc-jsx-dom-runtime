@@ -19,7 +19,7 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
 
     if let JSXAttrValue::JSXExprContainer(container) = value {
         if let JSXExpr::Expr(expr) = &container.expr {
-            if expr.is_lit() {
+            if expr.is_lit() || expr.is_tpl() {
                 return false;
             }
         }

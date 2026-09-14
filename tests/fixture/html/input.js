@@ -23,6 +23,7 @@
 <div attr:foo={`hello ${user }`} />;
 <button type="submit" onclick={handleClick} />;
 <div style="color: red; background-color: blue;" />;
+<span style={`background-color:${hex}`} />;
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;
 <span attributes={[]} />;
 <iframe dataset={{ foo: 'bar' }} />;
