@@ -34,6 +34,11 @@ For TypeScript and TSX, add the plugin and enable the TypeScript parser in
       "syntax": "typescript",
       "tsx": true
     },
+    "transform": {
+      "react": {
+        "runtime": "preserve"
+      }
+    },
     "experimental": {
       "plugins": [["swc-jsx-dom-runtime", {}]]
     }
@@ -50,6 +55,11 @@ For JavaScript and JSX, use the ECMAScript parser instead:
     "parser": {
       "syntax": "ecmascript",
       "jsx": true
+    },
+    "transform": {
+      "react": {
+        "runtime": "preserve"
+      }
     },
     "experimental": {
       "plugins": [["swc-jsx-dom-runtime", {}]]
