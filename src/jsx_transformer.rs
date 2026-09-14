@@ -22,7 +22,7 @@ fn is_lit_concat_bin(expr: &Expr) -> bool {
 }
 
 fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
-    let Some(value) = attr.value.as_ref() else {
+    let Some(value) = &attr.value else {
         return false;
     };
 
@@ -32,7 +32,7 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
 
     if let JSXAttrValue::JSXExprContainer(container) = value {
         if let JSXExpr::Expr(expr) = &container.expr {
-            if expr.is_lit() || expr.is_tpl() || is_lit_concat_bin(&expr) {
+            if expr.is_lit() || expr.is_tpl() || is_lit_concat_bin(expr) {
                 return false;
             }
         }
@@ -107,8 +107,8 @@ impl<C: Comments> JsxTransformer<C> {
 
     fn transform_expr(&mut self, expr: JSXExpr) -> Expr {
         match expr {
-            JSXExpr::Expr(expr) => match expr.as_ref() {
-                Expr::JSXElement(element) => self.transform_element(element.as_ref()),
+            JSXExpr::Expr(expr) => match &*expr {
+                Expr::JSXElement(element) => self.transform_element(element),
                 Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
                 Expr::JSXMember(memeber) => convert_jsx_member(memeber.clone()),
                 _ => *expr,
@@ -217,7 +217,7 @@ impl<C: Comments> JsxTransformer<C> {
                     transform_jsx_attr_str(value).into()
                 }
                 JSXAttrValue::JSXExprContainer(cntr) => self.transform_expr(cntr.expr.clone()),
-                JSXAttrValue::JSXElement(element) => self.transform_element(element.as_ref()),
+                JSXAttrValue::JSXElement(element) => self.transform_element(element),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
                 #[allow(unreachable_patterns)]
                 _ => todo!(),
@@ -249,7 +249,7 @@ impl<C: Comments> JsxTransformer<C> {
                 }
 
                 JSXElementChild::JSXElement(element) => {
-                    Some(prop_expr(self.transform_element(element.as_ref())))
+                    Some(prop_expr(self.transform_element(element)))
                 }
                 JSXElementChild::JSXFragment(fragment) => {
                     Some(prop_expr(self.transform_fragment(fragment)))
@@ -363,7 +363,7 @@ impl<C: Comments> JsxTransformer<C> {
                         } else if let Some(JSXAttrValue::JSXExprContainer(container)) = &attr.value
                         {
                             if let JSXExpr::Expr(expr) = &container.expr {
-                                if let Expr::Lit(Lit::Bool(val)) = expr.as_ref() {
+                                if let Expr::Lit(Lit::Bool(val)) = &**expr {
                                     attr.value = jsx_attr_val_str(&val.value.to_string());
                                 }
                             }
@@ -549,7 +549,7 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
 
         let expr = match node {
             Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
-            Expr::JSXElement(element) => self.transform_element(element.as_ref()),
+            Expr::JSXElement(element) => self.transform_element(element),
             _ => return,
         };
 
