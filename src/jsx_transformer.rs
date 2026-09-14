@@ -8,14 +8,14 @@ use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-fn is_string_concat_bin(expr: &Expr) -> bool {
+fn is_lit_concat_bin(expr: &Expr) -> bool {
     if let Expr::Bin(BinExpr {
         op: BinaryOp::Add,
         left,
         ..
     }) = expr
     {
-        return left.as_lit().map(Lit::is_str).is_some();
+        return left.is_lit() || left.is_tpl();
     }
 
     false
@@ -32,7 +32,7 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
 
     if let JSXAttrValue::JSXExprContainer(container) = value {
         if let JSXExpr::Expr(expr) = &container.expr {
-            if expr.is_lit() || expr.is_tpl() || is_string_concat_bin(&expr) {
+            if expr.is_lit() || expr.is_tpl() || is_lit_concat_bin(&expr) {
                 return false;
             }
         }

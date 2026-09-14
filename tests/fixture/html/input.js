@@ -25,6 +25,7 @@
 <div style="color: red; background-color: blue;" />;
 <span style={`background-color:${hex}`} />;
 <span style={'background-color:' + hex} />;
+<span style={`background-color:` + hex} />;
 <span style={style} />;
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;
 <span attributes={[]} />;
