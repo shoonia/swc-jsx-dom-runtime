@@ -24,6 +24,8 @@
 <button type="submit" onclick={handleClick} />;
 <div style="color: red; background-color: blue;" />;
 <span style={`background-color:${hex}`} />;
+<span style={'background-color:' + hex} />;
+<span style={style} />;
 <div style={{ color: 'red', backgroundColor: 'blue' }} />;
 <span attributes={[]} />;
 <iframe dataset={{ foo: 'bar' }} />;

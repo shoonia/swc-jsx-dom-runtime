@@ -95,6 +95,12 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
 /*#__PURE__*/ _jsx("span", {
     style: `background-color:${hex}`
 });
+/*#__PURE__*/ _jsx("span", {
+    style: 'background-color:' + hex
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>_setStyle(e, style)
+});
 /*#__PURE__*/ _jsx("div", {
     ref: (e)=>_setStyle(e, {
             color: 'red',
