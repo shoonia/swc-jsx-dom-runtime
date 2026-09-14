@@ -74,22 +74,6 @@ transformation.
 The package contains a precompiled WASI WebAssembly plugin. Your SWC version
 must support the plugin ABI used by this package.
 
-## Development
-
-The `wasm32-wasip1` Rust target is required.
-
-```sh
-rustup target add wasm32-wasip1
-npm test
-npm run build
-```
-
-To inspect exactly what npm will publish:
-
-```sh
-npm pack --dry-run
-```
-
 ## License
 
-MIT
+[MIT](./LICENSE)
