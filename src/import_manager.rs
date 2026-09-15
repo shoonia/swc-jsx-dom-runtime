@@ -1,4 +1,4 @@
-use std::array;
+use std::{array, format};
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::utils::private_ident;
