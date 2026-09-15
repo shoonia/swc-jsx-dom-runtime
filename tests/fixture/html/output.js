@@ -62,6 +62,12 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
     ref: (e)=>e.hello = `hello ${user}`
 });
 /*#__PURE__*/ _jsx("div", {
+    ref: (e)=>e.hello = 'hello ' + user
+});
+/*#__PURE__*/ _jsx("div", {
+    ref: (e)=>e.hello = `hello ` + user
+});
+/*#__PURE__*/ _jsx("div", {
     ref: (e)=>e.setAttribute("test", "value")
 });
 /*#__PURE__*/ _jsx("div", {
@@ -84,6 +90,12 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
 });
 /*#__PURE__*/ _jsx("div", {
     ref: (e)=>e.setAttribute("foo", `hello ${user}`)
+});
+/*#__PURE__*/ _jsx("div", {
+    ref: (e)=>e.setAttribute("foo", 'hello ' + user)
+});
+/*#__PURE__*/ _jsx("div", {
+    ref: (e)=>e.setAttribute("foo", `hello ` + user)
 });
 /*#__PURE__*/ _jsx("button", {
     type: "submit",

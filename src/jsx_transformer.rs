@@ -21,7 +21,7 @@ fn is_lit_concat_bin(expr: &Expr) -> bool {
     false
 }
 
-fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
+fn is_non_lit_style(attr: &JSXAttr) -> bool {
     let Some(value) = &attr.value else {
         return false;
     };
@@ -39,6 +39,11 @@ fn non_lit_jsx_attr_val(attr: &JSXAttr) -> bool {
     }
 
     true
+}
+
+#[inline]
+fn is_non_signalish_value(expr: &Expr) -> bool {
+    expr.is_lit() || expr.is_tpl() || expr.is_array() || expr.is_object() || is_lit_concat_bin(expr)
 }
 
 fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
@@ -296,7 +301,7 @@ impl<C: Comments> JsxTransformer<C> {
                             continue;
                         }
                         "style" => {
-                            if non_lit_jsx_attr_val(attr) {
+                            if is_non_lit_style(attr) {
                                 remove_indexes.push(index);
                                 compile_refs.push(set_utility(
                                     self.imports.add(ImportName::SetStyle),
@@ -403,15 +408,14 @@ impl<C: Comments> JsxTransformer<C> {
                         "attr" => {
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
-                            let ref_expr = match value {
-                                Expr::Lit(_) | Expr::Tpl(_) | Expr::Array(_) | Expr::Object(_) => {
-                                    set_attr_call_expr(name, value)
-                                }
-                                _ => signalish_attr(
+                            let ref_expr = if is_non_signalish_value(&value) {
+                                set_attr_call_expr(name, value)
+                            } else {
+                                signalish_attr(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
-                                ),
+                                )
                             };
 
                             remove_indexes.push(index);
@@ -421,15 +425,14 @@ impl<C: Comments> JsxTransformer<C> {
                         "prop" => {
                             let value = self.convert_jsx_attr_value(attr);
                             let name = namespaced.name.sym.as_str();
-                            let ref_expr = match value {
-                                Expr::Lit(_) | Expr::Tpl(_) | Expr::Array(_) | Expr::Object(_) => {
-                                    prop_assignment_expr(name, value)
-                                }
-                                _ => signalish_prop(
+                            let ref_expr = if is_non_signalish_value(&value) {
+                                prop_assignment_expr(name, value)
+                            } else {
+                                signalish_prop(
                                     self.imports.add(ImportName::SetSignalish),
                                     name,
                                     value,
-                                ),
+                                )
                             };
 
                             remove_indexes.push(index);

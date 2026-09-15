@@ -16,11 +16,15 @@
 <div prop:foo={[]}/>;
 <div prop:hello="world" />;
 <div prop:hello={`hello ${user}`} />;
+<div prop:hello={'hello ' + user} />;
+<div prop:hello={`hello ` + user} />;
 <div attr:test="value" />;
 <div attr:foo="value" attr:bar={1} />;
 <div attr:foo={'hello'} prop:bar-baz={{}} />;
 <div attr:foo={data} prop:bar-baz={data} />;
 <div attr:foo={`hello ${user }`} />;
+<div attr:foo={'hello ' + user} />;
+<div attr:foo={`hello ` + user} />;
 <button type="submit" onclick={handleClick} />;
 <div style="color: red; background-color: blue;" />;
 <span style={`background-color:${hex}`} />;
