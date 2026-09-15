@@ -2,11 +2,13 @@
  * Source: https://github.com/swc-project/swc/blob/main/crates/swc_ecma_transforms_react/src/jsx/mod.rs
  */
 use std::matches;
-use swc_core::atoms::{
-    wtf8::{Wtf8, Wtf8Buf},
-    Atom, Wtf8Atom,
+use swc_core::{
+    atoms::{
+        wtf8::{Wtf8, Wtf8Buf},
+        Atom, Wtf8Atom,
+    },
+    ecma::utils::str::is_line_terminator,
 };
-use swc_core::ecma::utils::str::is_line_terminator;
 
 /// https://github.com/microsoft/TypeScript/blob/9e20e032effad965567d4a1e1c30d5433b0a3332/src/compiler/transformers/jsx.ts#L572-L608
 ///

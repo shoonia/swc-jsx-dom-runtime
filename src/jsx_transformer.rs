@@ -1,12 +1,10 @@
-use crate::builders::*;
-use crate::collections::*;
-use crate::consts::*;
-use crate::import_manager::*;
-use crate::jsx_text_to_str::{jsx_text_to_str_with_raw, transform_jsx_attr_str};
+use crate::{builders::*, collections::*, consts::*, import_manager::*, jsx_text_to_str::*};
 use std::{format, iter, todo, vec};
-use swc_core::common::{comments::Comments, errors::HANDLER, Spanned};
-use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::{VisitMut, VisitMutWith};
+use swc_core::{
+    common::{comments::Comments, errors::HANDLER, Spanned},
+    ecma::ast::*,
+    ecma::visit::{VisitMut, VisitMutWith},
+};
 
 fn is_lit_concat_bin(expr: &Expr) -> bool {
     if let Expr::Bin(BinExpr {

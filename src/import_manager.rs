@@ -1,7 +1,8 @@
 use std::{array, format};
-use swc_core::common::DUMMY_SP;
-use swc_core::ecma::ast::*;
-use swc_core::ecma::utils::private_ident;
+use swc_core::{
+    common::DUMMY_SP,
+    ecma::{ast::*, utils::private_ident},
+};
 
 #[derive(Clone, Copy)]
 pub enum ImportName {

@@ -1,7 +1,8 @@
 use crate::consts::*;
-use swc_core::common::{Span, SyntaxContext, DUMMY_SP};
-use swc_core::ecma::ast::*;
-use swc_core::ecma::utils::is_valid_prop_ident;
+use swc_core::{
+    common::{Span, SyntaxContext, DUMMY_SP},
+    ecma::{ast::*, utils::is_valid_prop_ident},
+};
 
 #[inline(always)]
 pub fn null_expr() -> Expr {
