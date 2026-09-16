@@ -512,7 +512,10 @@ impl<C: Comments> VisitMut for JsxTransformer<C> {
     fn visit_mut_jsx_element(&mut self, element: &mut JSXElement) {
         let tag_name = match &element.opening.name {
             JSXElementName::Ident(ident) if !is_fn_component(ident) => ident.sym.as_str(),
-            _ => return,
+            _ => {
+                element.children.visit_mut_with(self);
+                return;
+            }
         };
 
         let is_html = is_html_tag(tag_name);

@@ -172,3 +172,20 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
     hello ${user}
 `
 });
+/*#__PURE__*/ _jsx("input", {
+    $: {
+        change: handleChange
+    },
+    ref: (e)=>_setSignalish(value, (i)=>e.value = i)
+});
+App({
+    children: /*#__PURE__*/ _jsx("input", {
+        $: {
+            change: handleChange
+        },
+        ref: (e)=>{
+            e.value = "hello";
+            e.setAttribute("test", "value");
+        }
+    })
+});

@@ -53,3 +53,7 @@
 <img alt={`
     hello ${user}
 `} />;
+<input on:change={handleChange} prop:value={value} />;
+<App>
+  <input on:change={handleChange} prop:value="hello" attr:test="value" />
+</App>;
