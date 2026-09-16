@@ -1,6 +1,6 @@
 {
   "name": "swc-jsx-dom-runtime",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "An SWC plugin that compiles JSX into optimized jsx-dom-runtime calls for direct DOM rendering",
   "author": {
     "name": "Alexander Zaytsev",
