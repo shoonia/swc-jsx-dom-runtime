@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -eu
+
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+target_dir="$project_dir/target/wasm32-wasip1/release"
+wasm_file="$target_dir/swc_jsx_dom_runtime.wasm"
+optimized_file="$wasm_file.tmp"
+optimization_stamp="$wasm_file.optimized"
+
+trap 'rm -f "$optimized_file"' EXIT HUP INT TERM
+
+cargo build \
+    --manifest-path "$project_dir/Cargo.toml" \
+    --target wasm32-wasip1 \
+    --release
+
+if [ ! -f "$optimization_stamp" ] || [ "$wasm_file" -nt "$optimization_stamp" ]; then
+    cargo run \
+        --manifest-path "$project_dir/tools/optimize-wasm/Cargo.toml" \
+        --release \
+        -- "$wasm_file" "$optimized_file"
+
+    mv "$optimized_file" "$wasm_file"
+    touch "$optimization_stamp"
+    printf 'Built and optimized WASM artifact: %s\n' "$wasm_file"
+else
+    printf 'WASM artifact is already optimized: %s\n' "$wasm_file"
+fi
+
+trap - EXIT HUP INT TERM
