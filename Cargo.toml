@@ -1,6 +1,6 @@
 [package]
 name = "swc-jsx-dom-runtime"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 authors = ["Alexander Zaytsev <zaytsev126@gmail.com>"]
 description = "An SWC plugin that compiles JSX into optimized jsx-dom-runtime calls for direct DOM rendering"
