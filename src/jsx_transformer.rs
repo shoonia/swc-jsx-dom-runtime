@@ -434,7 +434,7 @@ impl<C: Comments> JsxTransformer<C> {
             ));
         }
 
-        if !children_props.is_empty() && element.children.is_empty() {
+        if element.children.is_empty() && !children_props.is_empty() {
             let last_children = children_props.last().unwrap();
             let value = self.convert_jsx_attr_value(last_children);
 
