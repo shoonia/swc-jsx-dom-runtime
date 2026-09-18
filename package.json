@@ -36,7 +36,7 @@
     }
   },
   "scripts": {
-    "build": "cargo build-wasip1 --release",
+    "build": "sh ./build",
     "test": "cargo test --all-targets --all-features",
     "fixture": "UPDATE=1 cargo test --test fixture",
     "prepack": "npm test && npm run build",
