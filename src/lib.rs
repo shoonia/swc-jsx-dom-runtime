@@ -9,6 +9,7 @@ mod consts;
 mod import_manager;
 mod jsx_text_to_str;
 pub mod jsx_transformer;
+mod utils;
 
 use crate::jsx_transformer::JsxTransformer;
 

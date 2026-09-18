@@ -1,48 +1,12 @@
-use crate::{builders::*, collections::*, consts::*, import_manager::*, jsx_text_to_str::*};
+use crate::{
+    builders::*, collections::*, consts::*, import_manager::*, jsx_text_to_str::*, utils::*,
+};
 use std::{format, iter, todo, vec};
 use swc_core::{
     common::{comments::Comments, errors::HANDLER, Spanned},
     ecma::ast::*,
     ecma::visit::{VisitMut, VisitMutWith},
 };
-
-fn is_lit_concat_bin(expr: &Expr) -> bool {
-    if let Expr::Bin(BinExpr {
-        op: BinaryOp::Add,
-        left,
-        ..
-    }) = expr
-    {
-        return left.is_lit() || left.is_tpl();
-    }
-
-    false
-}
-
-fn is_non_lit_style(attr: &JSXAttr) -> bool {
-    let Some(value) = &attr.value else {
-        return false;
-    };
-
-    if let JSXAttrValue::Str(_) = value {
-        return false;
-    }
-
-    if let JSXAttrValue::JSXExprContainer(container) = value {
-        if let JSXExpr::Expr(expr) = &container.expr {
-            if expr.is_lit() || expr.is_tpl() || is_lit_concat_bin(expr) {
-                return false;
-            }
-        }
-    }
-
-    true
-}
-
-#[inline]
-fn is_non_signalish_value(expr: &Expr) -> bool {
-    expr.is_lit() || expr.is_tpl() || expr.is_array() || expr.is_object() || is_lit_concat_bin(expr)
-}
 
 fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
     let obj_expr: Expr = match memeber.obj {
@@ -62,44 +26,6 @@ fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
 
 fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
     format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
-}
-
-fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
-    let mut acc = Vec::new();
-    for elem in elems {
-        flatten_child(elem, &mut acc);
-    }
-
-    if acc.len() == 1 {
-        let elem = acc.pop().unwrap();
-        if elem.spread.is_none() {
-            *elem.expr
-        } else {
-            array_expr(vec![Some(elem)])
-        }
-    } else {
-        array_expr(acc.into_iter().map(Some).collect())
-    }
-}
-
-fn flatten_child(elem: ExprOrSpread, acc: &mut Vec<ExprOrSpread>) {
-    if let Expr::Array(array) = *elem.expr {
-        for item in array.elems.into_iter().flatten() {
-            flatten_child(item, acc);
-        }
-    } else {
-        acc.push(elem);
-    }
-}
-
-fn flatten_ref(elem: Expr, acc: &mut Vec<Expr>) {
-    if let Expr::Array(array) = elem {
-        for item in array.elems.into_iter().flatten() {
-            flatten_ref(*item.expr, acc);
-        }
-    } else {
-        acc.push(elem);
-    }
 }
 
 #[derive(Clone, Copy)]
