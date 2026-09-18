@@ -57,3 +57,5 @@
 <App>
   <input on:change={handleChange} prop:value="hello" attr:test="value" />
 </App>;
+<div>start {[1,2,[34,[5]]]} end</div>;
+<div><><>1</>2</>{[3,4,[5,[6,7,[8],9],9]]}11</div>;

@@ -64,16 +64,40 @@ fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
     format!("{}:{}", jsx_namespaced.ns, jsx_namespaced.name)
 }
 
-fn children_expr(mut elems: Vec<ExprOrSpread>) -> Expr {
-    if elems.len() == 1 {
-        let elem = elems.pop().unwrap();
+fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
+    let mut flattened = Vec::new();
+    for elem in elems {
+        flatten_child(elem, &mut flattened);
+    }
+
+    if flattened.len() == 1 {
+        let elem = flattened.pop().unwrap();
         if elem.spread.is_none() {
             *elem.expr
         } else {
             array_expr(vec![Some(elem)])
         }
     } else {
-        array_expr(elems.into_iter().map(Some).collect())
+        array_expr(flattened.into_iter().map(Some).collect())
+    }
+}
+
+fn flatten_child(elem: ExprOrSpread, flattened: &mut Vec<ExprOrSpread>) {
+    if elem.spread.is_some() {
+        flattened.push(elem);
+        return;
+    }
+
+    match *elem.expr {
+        Expr::Array(array) => {
+            for elem in array.elems.into_iter().flatten() {
+                flatten_child(elem, flattened);
+            }
+        }
+        expr => flattened.push(ExprOrSpread {
+            spread: None,
+            expr: expr.into(),
+        }),
     }
 }
 
