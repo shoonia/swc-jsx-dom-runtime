@@ -83,21 +83,12 @@ fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
 }
 
 fn flatten_child(elem: ExprOrSpread, flattened: &mut Vec<ExprOrSpread>) {
-    if elem.spread.is_some() {
-        flattened.push(elem);
-        return;
-    }
-
-    match *elem.expr {
-        Expr::Array(array) => {
-            for elem in array.elems.into_iter().flatten() {
-                flatten_child(elem, flattened);
-            }
+    if let Expr::Array(array) = *elem.expr {
+        for item in array.elems.into_iter().flatten() {
+            flatten_child(item, flattened);
         }
-        expr => flattened.push(ExprOrSpread {
-            spread: None,
-            expr: expr.into(),
-        }),
+    } else {
+        flattened.push(elem);
     }
 }
 
