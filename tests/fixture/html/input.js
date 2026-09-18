@@ -36,6 +36,7 @@
 <iframe dataset={{ foo: 'bar' }} />;
 <div ref={e => e.focus()} />;
 <div ref={e => e.focus()} attr:test="value" prop:foo="bar" style={style} attributes={attrs} onclick={handleClick} />;
+<div ref={[ref, ref2]} attr:test="value" prop:foo="bar" />;
 <div children={<span />} />;
 <code children=<span /> />;
 <div children={<><small /><strong /></>} />;

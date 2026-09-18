@@ -145,6 +145,16 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
         (e)=>e.focus()
     ]
 });
+/*#__PURE__*/ _jsx("div", {
+    ref: [
+        (e)=>{
+            e.setAttribute("test", "value");
+            e.foo = "bar";
+        },
+        ref,
+        ref2
+    ]
+});
 /*#__PURE__*/ _jsx("div", {}, /*#__PURE__*/ _jsx("span", {}));
 /*#__PURE__*/ _jsx("code", {}, /*#__PURE__*/ _jsx("span", {}));
 /*#__PURE__*/ _jsx("div", {}, [

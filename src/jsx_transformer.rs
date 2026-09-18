@@ -65,30 +65,40 @@ fn convert_jsx_namespaced_name(jsx_namespaced: &JSXNamespacedName) -> String {
 }
 
 fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
-    let mut flattened = Vec::new();
+    let mut acc = Vec::new();
     for elem in elems {
-        flatten_child(elem, &mut flattened);
+        flatten_child(elem, &mut acc);
     }
 
-    if flattened.len() == 1 {
-        let elem = flattened.pop().unwrap();
+    if acc.len() == 1 {
+        let elem = acc.pop().unwrap();
         if elem.spread.is_none() {
             *elem.expr
         } else {
             array_expr(vec![Some(elem)])
         }
     } else {
-        array_expr(flattened.into_iter().map(Some).collect())
+        array_expr(acc.into_iter().map(Some).collect())
     }
 }
 
-fn flatten_child(elem: ExprOrSpread, flattened: &mut Vec<ExprOrSpread>) {
+fn flatten_child(elem: ExprOrSpread, acc: &mut Vec<ExprOrSpread>) {
     if let Expr::Array(array) = *elem.expr {
         for item in array.elems.into_iter().flatten() {
-            flatten_child(item, flattened);
+            flatten_child(item, acc);
         }
     } else {
-        flattened.push(elem);
+        acc.push(elem);
+    }
+}
+
+fn flatten_ref(elem: Expr, acc: &mut Vec<Expr>) {
+    if let Expr::Array(array) = elem {
+        for item in array.elems.into_iter().flatten() {
+            flatten_ref(*item.expr, acc);
+        }
+    } else {
+        acc.push(elem);
     }
 }
 
@@ -474,7 +484,7 @@ impl<C: Comments> JsxTransformer<C> {
             node.attrs.push(jsx_attr(EVENT_KEY, object_expr(events)));
         }
 
-        let mut refs = if compile_refs.is_empty() {
+        let refs = if compile_refs.is_empty() {
             user_refs
         } else {
             iter::once(create_ref_cb(compile_refs))
@@ -483,12 +493,17 @@ impl<C: Comments> JsxTransformer<C> {
         };
 
         if !refs.is_empty() {
+            let mut acc = Vec::new();
+            for elem in refs {
+                flatten_ref(elem, &mut acc);
+            }
+
             node.attrs.push(jsx_attr(
                 REF_KEY,
-                if refs.len() == 1 {
-                    refs.pop().unwrap()
+                if acc.len() == 1 {
+                    acc.pop().unwrap()
                 } else {
-                    array_expr(refs.into_iter().map(|e| Some(prop_expr(e))).collect())
+                    array_expr(acc.into_iter().map(|e| Some(prop_expr(e))).collect())
                 },
             ));
         }
