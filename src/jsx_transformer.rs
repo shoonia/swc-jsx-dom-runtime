@@ -1,7 +1,7 @@
 use crate::{
     builders::*, collections::*, consts::*, import_manager::*, jsx_text_to_str::*, utils::*,
 };
-use std::{format, iter, todo, vec};
+use std::{format, todo, vec};
 use swc_core::{
     common::{comments::Comments, errors::HANDLER, Spanned},
     ecma::ast::*,
@@ -413,9 +413,9 @@ impl<C: Comments> JsxTransformer<C> {
         let refs = if compile_refs.is_empty() {
             user_refs
         } else {
-            iter::once(create_ref_cb(compile_refs))
-                .chain(user_refs)
-                .collect()
+            let mut refs = vec![create_ref_cb(compile_refs)];
+            refs.extend(user_refs);
+            refs
         };
 
         if !refs.is_empty() {
