@@ -680,14 +680,7 @@ pub fn transform_jsx_attr_str(v: &str) -> Expr {
         match ch {
             '\n' | '\r' | '\t' => {
                 buf.push(' ');
-
-                while let Some(next) = iter.peek() {
-                    if *next == ' ' {
-                        iter.next();
-                    } else {
-                        break;
-                    }
-                }
+                while iter.next_if_eq(&' ').is_some() {}
             }
             _ => buf.push(ch),
         }
