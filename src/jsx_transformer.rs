@@ -59,13 +59,13 @@ impl<C: Comments> JsxTransformer<C> {
         }
     }
 
-    fn transform_expr(&mut self, jsx_expr: JSXExpr) -> Expr {
+    fn transform_expr(&mut self, jsx_expr: &JSXExpr) -> Expr {
         match jsx_expr {
-            JSXExpr::Expr(expr) => match *expr {
-                Expr::JSXElement(element) => self.transform_element(&element),
-                Expr::JSXFragment(fragment) => self.transform_fragment(&fragment),
-                Expr::JSXMember(member) => convert_jsx_member(member),
-                e => e,
+            JSXExpr::Expr(expr) => match &**expr {
+                Expr::JSXElement(element) => self.transform_element(element),
+                Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
+                Expr::JSXMember(member) => convert_jsx_member(member.clone()),
+                e => e.clone(),
             },
             _ => null_expr(),
         }
@@ -170,7 +170,7 @@ impl<C: Comments> JsxTransformer<C> {
                     let value = lit.value.as_str().unwrap_or_default();
                     transform_jsx_attr_str(value).into()
                 }
-                JSXAttrValue::JSXExprContainer(cntr) => self.transform_expr(cntr.expr.clone()),
+                JSXAttrValue::JSXExprContainer(container) => self.transform_expr(&container.expr),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element),
                 JSXAttrValue::JSXFragment(fragment) => self.transform_fragment(fragment),
                 #[allow(unreachable_patterns)]
@@ -186,7 +186,7 @@ impl<C: Comments> JsxTransformer<C> {
             .filter_map(|child| match child {
                 JSXElementChild::JSXExprContainer(container) => match container.expr {
                     JSXExpr::JSXEmptyExpr(_) => None,
-                    _ => Some(prop_expr(self.transform_expr(container.expr.clone()))),
+                    _ => Some(prop_expr(self.transform_expr(&container.expr))),
                 },
                 JSXElementChild::JSXSpreadChild(spread) => Some(ExprOrSpread {
                     spread: Some(spread.span),
