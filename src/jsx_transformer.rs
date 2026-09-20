@@ -135,13 +135,13 @@ impl<C: Comments> JsxTransformer<C> {
                     call_expr_with_span(self.imports.add(ImportName::Jsx), args, element.span)
                 }
             }
-            JSXElementName::JSXMemberExpr(jsx_memeber) => {
+            JSXElementName::JSXMemberExpr(jsx_member) => {
                 if !children.is_empty() {
                     props.push(prop(prop_ident(CHILDREN_KEY), children_expr(children)));
                 }
 
                 call_expr(
-                    convert_jsx_member(jsx_memeber.clone()),
+                    convert_jsx_member(jsx_member.clone()),
                     vec![prop_expr(object_expr(props))],
                 )
             }
