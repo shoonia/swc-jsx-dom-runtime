@@ -40,7 +40,7 @@ pub fn is_non_signalish_value(expr: &Expr) -> bool {
 }
 
 pub fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
-    let mut acc = Vec::new();
+    let mut acc = Vec::with_capacity(elems.len());
     for elem in elems {
         flatten_child(elem, &mut acc);
     }
