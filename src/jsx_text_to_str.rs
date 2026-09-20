@@ -7,7 +7,7 @@ use swc_core::{
         wtf8::{Wtf8, Wtf8Buf},
         Atom, Wtf8Atom,
     },
-    ecma::utils::str::is_line_terminator,
+    ecma::{ast::Expr, utils::str::is_line_terminator},
 };
 
 /// https://github.com/microsoft/TypeScript/blob/9e20e032effad965567d4a1e1c30d5433b0a3332/src/compiler/transformers/jsx.ts#L572-L608
@@ -672,7 +672,7 @@ fn add_line_of_jsx_text<'a>(
     }
 }
 
-pub fn transform_jsx_attr_str(v: &str) -> Wtf8Atom {
+pub fn transform_jsx_attr_str(v: &str) -> Expr {
     let mut buf = String::with_capacity(v.len());
     let mut iter = v.chars().peekable();
 

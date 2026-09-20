@@ -168,7 +168,7 @@ impl<C: Comments> JsxTransformer<C> {
             Some(value) => match value {
                 JSXAttrValue::Str(lit) => {
                     let value = lit.value.as_str().unwrap_or_default();
-                    transform_jsx_attr_str(value).into()
+                    transform_jsx_attr_str(value)
                 }
                 JSXAttrValue::JSXExprContainer(container) => self.transform_expr(&container.expr),
                 JSXAttrValue::JSXElement(element) => self.transform_element(element),
