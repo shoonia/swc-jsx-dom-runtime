@@ -1,8 +1,13 @@
 use crate::consts::*;
 use swc_core::{
     common::{Span, SyntaxContext, DUMMY_SP},
-    ecma::{ast::*, utils::is_valid_prop_ident},
+    ecma::ast::*,
 };
+
+#[inline]
+fn is_valid_prop_ident(key: &str) -> bool {
+    !key.contains(['-', ':'])
+}
 
 #[inline(always)]
 pub fn null_expr() -> Expr {
