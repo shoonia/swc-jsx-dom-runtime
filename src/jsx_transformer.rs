@@ -8,8 +8,8 @@ use swc_core::{
     ecma::visit::{VisitMut, VisitMutWith},
 };
 
-fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
-    let obj_expr: Expr = match memeber.obj {
+fn convert_jsx_member(member: JSXMemberExpr) -> Expr {
+    let obj_expr: Expr = match member.obj {
         JSXObject::Ident(ident) => ident.into(),
         JSXObject::JSXMemberExpr(member) => convert_jsx_member(*member),
         #[allow(unreachable_patterns)]
@@ -17,9 +17,9 @@ fn convert_jsx_member(memeber: JSXMemberExpr) -> Expr {
     };
 
     MemberExpr {
-        span: memeber.span,
+        span: member.span,
         obj: obj_expr.into(),
-        prop: memeber.prop.into(),
+        prop: member.prop.into(),
     }
     .into()
 }
@@ -59,13 +59,13 @@ impl<C: Comments> JsxTransformer<C> {
         }
     }
 
-    fn transform_expr(&mut self, expr: JSXExpr) -> Expr {
-        match expr {
-            JSXExpr::Expr(expr) => match &*expr {
-                Expr::JSXElement(element) => self.transform_element(element),
-                Expr::JSXFragment(fragment) => self.transform_fragment(fragment),
-                Expr::JSXMember(memeber) => convert_jsx_member(memeber.clone()),
-                _ => *expr,
+    fn transform_expr(&mut self, jsx_expr: JSXExpr) -> Expr {
+        match jsx_expr {
+            JSXExpr::Expr(expr) => match *expr {
+                Expr::JSXElement(element) => self.transform_element(&element),
+                Expr::JSXFragment(fragment) => self.transform_fragment(&fragment),
+                Expr::JSXMember(member) => convert_jsx_member(member),
+                e => e,
             },
             _ => null_expr(),
         }
