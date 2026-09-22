@@ -167,9 +167,12 @@ import { jsx as _jsx, setSignalish as _setSignalish, setStyle as _setStyle, setA
 /*#__PURE__*/ _jsx("ol", {}, "used");
 /*#__PURE__*/ _jsx("div", {}, [
     1,
-    2[34, [
-        5
-    ]]
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
 ]);
 /*#__PURE__*/ _jsx("img", {
     alt: " text "
@@ -228,4 +231,17 @@ App({
     15,
     ...i,
     16
+]);
+/*#__PURE__*/ _jsx("div", {}, [
+    ...items
+]);
+/*#__PURE__*/ _jsx("div", {}, [
+    ...items
+]);
+/*#__PURE__*/ _jsx("div", {}, [
+    ...items
+]);
+/*#__PURE__*/ _jsx("div", {}, [
+    ...items,
+    ...items
 ]);

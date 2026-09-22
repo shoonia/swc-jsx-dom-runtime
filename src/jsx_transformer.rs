@@ -432,7 +432,10 @@ impl<C: Comments> JsxTransformer<C> {
 
         if element.children.is_empty() && !children_props.is_empty() {
             let last_children = children_props.last().unwrap();
-            let value = self.convert_jsx_attr_value(last_children);
+            let value = match self.convert_jsx_attr_value(last_children) {
+                Expr::Array(arr) => children_expr(arr.elems.into_iter().flatten().collect()),
+                e => e,
+            };
 
             element.children.push(
                 JSXExprContainer {

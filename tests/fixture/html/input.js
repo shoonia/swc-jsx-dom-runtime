@@ -44,7 +44,7 @@
 <em children={10} />;
 <li children="1" children="2" />;
 <ol children="skip">used</ol>;
-<div children={[1,2 [34, [5]]]} />;
+<div children={[1, 2, [3, 4, [5], 6], 7]} />;
 <img alt="
         text
 " />;
@@ -60,3 +60,7 @@
 </App>;
 <div>start {[1,2,[34,[5]]]} end</div>;
 <div><><>1</>2</>{[3,4,[5,[6,7,[8],9],9]]}11{...i}12{[...i, 13, [14, ...i, 15, [...i], 16]]}</div>;
+<div children={[...items]} />;
+<div>{[...items]}</div>;
+<div>{...items}</div>;
+<div>{...items}{...items}</div>;

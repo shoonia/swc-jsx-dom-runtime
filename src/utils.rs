@@ -57,7 +57,7 @@ pub fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {
     }
 }
 
-pub fn flatten_child(elem: ExprOrSpread, acc: &mut Vec<ExprOrSpread>) {
+fn flatten_child(elem: ExprOrSpread, acc: &mut Vec<ExprOrSpread>) {
     if let Expr::Array(array) = *elem.expr {
         for item in array.elems.into_iter().flatten() {
             flatten_child(item, acc);
