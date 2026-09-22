@@ -67,12 +67,21 @@ pub fn flatten_child(elem: ExprOrSpread, acc: &mut Vec<ExprOrSpread>) {
     }
 }
 
-pub fn flatten_ref(elem: Expr, acc: &mut Vec<Expr>) {
+fn flatten_expr(elem: Expr, acc: &mut Vec<Expr>) {
     if let Expr::Array(array) = elem {
         for item in array.elems.into_iter().flatten() {
-            flatten_ref(*item.expr, acc);
+            flatten_expr(*item.expr, acc);
         }
     } else {
         acc.push(elem);
     }
+}
+
+#[inline]
+pub fn flatten_expr_vec(elems: Vec<Expr>) -> Vec<Expr> {
+    let mut acc = Vec::with_capacity(elems.len());
+    for elem in elems {
+        flatten_expr(elem, &mut acc);
+    }
+    acc
 }

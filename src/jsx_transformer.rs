@@ -419,11 +419,7 @@ impl<C: Comments> JsxTransformer<C> {
         };
 
         if !refs.is_empty() {
-            let mut acc = Vec::with_capacity(refs.len());
-            for elem in refs {
-                flatten_ref(elem, &mut acc);
-            }
-
+            let mut acc = flatten_expr_vec(refs);
             node.attrs.push(jsx_attr(
                 REF_KEY,
                 if acc.len() == 1 {
