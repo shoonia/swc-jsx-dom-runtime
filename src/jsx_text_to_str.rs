@@ -32,10 +32,10 @@ use swc_core::{
 #[inline]
 pub fn jsx_text_to_str_with_raw(value: &Wtf8Atom, raw: &Atom) -> Wtf8Atom {
     // Fast path: if no HTML entities (raw == value), use the simple algorithm
-    if let Some(value) = value.as_str() {
-        if value == raw.as_str() {
-            return jsx_text_to_str_impl(value).into();
-        }
+    if let Some(value) = value.as_str()
+        && value == raw.as_str()
+    {
+        return jsx_text_to_str_impl(value).into();
     }
     // Build a mask of which code point positions in value came from HTML
     // entities.

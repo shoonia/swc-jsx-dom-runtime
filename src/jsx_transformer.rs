@@ -3,9 +3,11 @@ use crate::{
 };
 use std::{format, todo, vec};
 use swc_core::{
-    common::{comments::Comments, errors::HANDLER, Spanned},
-    ecma::ast::*,
-    ecma::visit::{VisitMut, VisitMutWith},
+    common::{Spanned, comments::Comments, errors::HANDLER},
+    ecma::{
+        ast::*,
+        visit::{VisitMut, VisitMutWith},
+    },
 };
 
 fn convert_jsx_member(member: JSXMemberExpr) -> Expr {
@@ -291,11 +293,11 @@ impl<C: Comments> JsxTransformer<C> {
                         continue;
                     }
 
-                    if scope.is_svg {
-                        if let Some(a) = svg_dom_attribute(attr_name) {
-                            ident.sym = a.into();
-                            continue;
-                        }
+                    if scope.is_svg
+                        && let Some(a) = svg_dom_attribute(attr_name)
+                    {
+                        ident.sym = a.into();
+                        continue;
                     }
 
                     let name = attr_name.to_lowercase();
@@ -315,12 +317,10 @@ impl<C: Comments> JsxTransformer<C> {
                         if attr.value.is_none() {
                             attr.value = jsx_attr_val_str("true");
                         } else if let Some(JSXAttrValue::JSXExprContainer(container)) = &attr.value
+                            && let JSXExpr::Expr(expr) = &container.expr
+                            && let Expr::Lit(Lit::Bool(val)) = &**expr
                         {
-                            if let JSXExpr::Expr(expr) = &container.expr {
-                                if let Expr::Lit(Lit::Bool(val)) = &**expr {
-                                    attr.value = jsx_attr_val_str(&val.value.to_string());
-                                }
-                            }
+                            attr.value = jsx_attr_val_str(&val.value.to_string());
                         }
                         continue;
                     }

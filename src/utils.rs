@@ -23,12 +23,11 @@ pub fn is_non_lit_style(attr: &JSXAttr) -> bool {
         return false;
     }
 
-    if let JSXAttrValue::JSXExprContainer(container) = value {
-        if let JSXExpr::Expr(expr) = &container.expr {
-            if expr.is_lit() || expr.is_tpl() || is_bin_lit(expr) {
-                return false;
-            }
-        }
+    if let JSXAttrValue::JSXExprContainer(container) = value
+        && let JSXExpr::Expr(expr) = &container.expr
+        && (expr.is_lit() || expr.is_tpl() || is_bin_lit(expr))
+    {
+        return false;
     }
 
     true
