@@ -3,3 +3,4 @@
 <name:space><App /><Member.Exp /></name:space>;
 <name:space camelCase={1n} />;
 <a:name className="my-class" />;
+<h:p children={<c:q />} />

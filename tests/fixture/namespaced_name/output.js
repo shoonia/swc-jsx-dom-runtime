@@ -11,3 +11,6 @@ import { jsx as _jsx } from "jsx-dom-runtime";
 /*#__PURE__*/ _jsx("a:name", {
     className: "my-class"
 });
+/*#__PURE__*/ _jsx("h:p", {
+    children: /*#__PURE__*/ _jsx("c:q", {})
+});
