@@ -4,8 +4,8 @@
 use std::matches;
 use swc_core::{
     atoms::{
-        wtf8::{Wtf8, Wtf8Buf},
         Atom, Wtf8Atom,
+        wtf8::{Wtf8, Wtf8Buf},
     },
     ecma::{ast::Expr, utils::str::is_line_terminator},
 };
@@ -566,7 +566,7 @@ fn add_line_of_jsx_text_wtf8(
         buffer.push_str(" ");
         buffer.push_wtf8(source.slice(line_start, line_end));
         *acc = Some(buffer);
-    } else if let Some(ref mut buffer) = acc {
+    } else if let Some(buffer) = acc {
         // Subsequent lines
         buffer.push_str(" ");
         buffer.push_wtf8(source.slice(line_start, line_end));

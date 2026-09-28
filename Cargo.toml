@@ -1,7 +1,7 @@
 [package]
 name = "swc-jsx-dom-runtime"
 version = "0.1.6"
-edition = "2021"
+edition = "2024"
 authors = ["Alexander Zaytsev <zaytsev126@gmail.com>"]
 description = "An SWC plugin that compiles JSX into optimized jsx-dom-runtime calls for direct DOM rendering"
 license = "MIT"
@@ -18,16 +18,15 @@ strip = true
 panic = "abort"
 
 [dependencies]
-swc_core = { version = "80.0.*", features = [
+swc_core = { version = "^81.0.0", features = [
   "ecma_ast",
-  "ecma_visit",
   "ecma_utils",
   "ecma_plugin_transform",
 ] }
 
 [dev-dependencies]
 testing = "27.0.0"
-swc_core = { version = "80.0.*", features = [
+swc_core = { version = "^81.0.0", features = [
   "ecma_parser",
   "testing_transform",
 ] }
