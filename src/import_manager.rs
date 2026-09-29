@@ -1,6 +1,6 @@
 use std::{array, format};
 use swc_core::{
-    common::DUMMY_SP,
+    common::{DUMMY_SP, util::take::Take},
     ecma::{ast::*, utils::private_ident},
 };
 
@@ -79,7 +79,7 @@ impl ImportManager {
         local_ident.into()
     }
 
-    pub fn inject_into_module(&self, module: &mut Module) {
+    pub fn inject_into_module(&mut self, module: &mut Module) {
         if self.specifiers.is_empty() {
             return;
         }
@@ -88,7 +88,7 @@ impl ImportManager {
             0,
             ImportDecl {
                 span: DUMMY_SP,
-                specifiers: self.specifiers.clone(),
+                specifiers: self.specifiers.take(),
                 src: Str::from("jsx-dom-runtime").into(),
                 type_only: false,
                 with: None,
