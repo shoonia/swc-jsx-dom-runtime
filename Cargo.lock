@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "swc-jsx-dom-runtime"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "swc_core",
  "testing",
@@ -1224,9 +1224,9 @@ dependencies = [
 
 [[package]]
 name = "swc_core"
-version = "81.0.0"
+version = "81.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a02a3fd04dbe13b339f82dfc5e6e05c197da49e4e9e67d8930804243b306249"
+checksum = "454124107875a9a7633b41e95215125e8c5bae43bf185521a58abb6f3ffa8bb8"
 dependencies = [
  "swc_allocator",
  "swc_atoms",

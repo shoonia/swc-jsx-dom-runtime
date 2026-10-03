@@ -1,6 +1,6 @@
 {
   "name": "swc-jsx-dom-runtime",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "An SWC plugin that compiles JSX into optimized jsx-dom-runtime calls for direct DOM rendering",
   "type": "module",
   "main": "index.wasm",
@@ -18,7 +18,7 @@
     "lint": "cargo clippy -- -D warnings"
   },
   "peerDependencies": {
-    "@swc/core": "^1.16.2"
+    "@swc/core": "^1.16.13"
   },
   "peerDependenciesMeta": {
     "@swc/core": {
