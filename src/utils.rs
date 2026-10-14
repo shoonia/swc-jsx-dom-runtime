@@ -1,17 +1,44 @@
+use std::matches;
+
 use crate::builders::array_expr;
 use swc_core::ecma::ast::{BinExpr, BinaryOp, Expr, ExprOrSpread, JSXAttr, JSXAttrValue, JSXExpr};
 
-fn is_bin_lit(expr: &Expr) -> bool {
-    if let Expr::Bin(BinExpr {
-        op: BinaryOp::Add,
-        left,
-        ..
-    }) = expr
-    {
-        return left.is_lit() || left.is_tpl();
+fn is_primitive_value(expr: &Expr) -> bool {
+    if let Expr::Bin(BinExpr { op, .. }) = expr {
+        return matches!(
+            op,
+            // Operators that can return non-primitive types
+            // | BinaryOp::LogicalAnd // &&  -> any
+            // | BinaryOp::LogicalOr  // ||  -> any
+            // | BinaryOp::NullishCoalescing // ??  -> any
+
+            // Operators that return only primitive types
+            BinaryOp::EqEq             // ==  -> boolean
+            | BinaryOp::NotEq          // !=  -> boolean
+            | BinaryOp::EqEqEq         // === -> boolean
+            | BinaryOp::NotEqEq        // !== -> boolean
+            | BinaryOp::Lt             // <   -> boolean
+            | BinaryOp::LtEq           // <=  -> boolean
+            | BinaryOp::Gt             // >   -> boolean
+            | BinaryOp::GtEq           // >=  -> boolean
+            | BinaryOp::LShift         // <<  -> number / bigint
+            | BinaryOp::RShift         // >>  -> number / bigint
+            | BinaryOp::ZeroFillRShift // >>> -> number
+            | BinaryOp::Add            // +   -> string / number / bigint
+            | BinaryOp::Sub            // -   -> number / bigint
+            | BinaryOp::Mul            // *   -> number / bigint
+            | BinaryOp::Div            // /   -> number / bigint
+            | BinaryOp::Mod            // %   -> number / bigint
+            | BinaryOp::BitOr          // |   -> number / bigint
+            | BinaryOp::BitXor         // ^   -> number / bigint
+            | BinaryOp::BitAnd         // &   -> number / bigint
+            | BinaryOp::In             // in  -> boolean
+            | BinaryOp::InstanceOf     // instanceof -> boolean
+            | BinaryOp::Exp // **  -> number / bigint
+        );
     }
 
-    false
+    expr.is_lit() || expr.is_tpl() || expr.is_unary()
 }
 
 pub fn is_non_lit_style(attr: &JSXAttr) -> bool {
@@ -25,7 +52,7 @@ pub fn is_non_lit_style(attr: &JSXAttr) -> bool {
 
     if let JSXAttrValue::JSXExprContainer(container) = value
         && let JSXExpr::Expr(expr) = &container.expr
-        && (expr.is_lit() || expr.is_tpl() || is_bin_lit(expr))
+        && is_primitive_value(expr)
     {
         return false;
     }
@@ -35,7 +62,7 @@ pub fn is_non_lit_style(attr: &JSXAttr) -> bool {
 
 #[inline]
 pub fn is_non_signalish_value(expr: &Expr) -> bool {
-    expr.is_lit() || expr.is_tpl() || expr.is_array() || expr.is_object() || is_bin_lit(expr)
+    is_primitive_value(expr) || expr.is_array() || expr.is_object()
 }
 
 pub fn children_expr(elems: Vec<ExprOrSpread>) -> Expr {

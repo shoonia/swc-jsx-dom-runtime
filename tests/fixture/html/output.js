@@ -245,3 +245,39 @@ App({
     ...items,
     ...items
 ]);
+/*#__PURE__*/ _jsx("button", {
+    disabled: !isEnabled
+});
+/*#__PURE__*/ _jsx("button", {
+    ref: (e)=>e.disabled = !isEnabled
+});
+/*#__PURE__*/ _jsx("button", {
+    ref: (e)=>e.setAttribute("disabled", !isEnabled)
+});
+/*#__PURE__*/ _jsx("button", {
+    disabled: data.isEnabled ?? !isEnabled
+});
+/*#__PURE__*/ _jsx("button", {
+    ref: (e)=>_setSignalish(data.isEnabled ?? !isEnabled, (i)=>e.disabled = i)
+});
+/*#__PURE__*/ _jsx("button", {
+    ref: (e)=>_setSignalish(data.isEnabled ?? !isEnabled, (i)=>e.setAttribute("disabled", i))
+});
+/*#__PURE__*/ _jsx("input", {
+    readonly: 'readonly' in data
+});
+/*#__PURE__*/ _jsx("input", {
+    ref: (e)=>e.readonly = 'readonly' in data
+});
+/*#__PURE__*/ _jsx("input", {
+    ref: (e)=>e.setAttribute("readonly", 'readonly' in data)
+});
+/*#__PURE__*/ _jsx("input", {
+    readonly: data instanceof HTMLElement
+});
+/*#__PURE__*/ _jsx("input", {
+    ref: (e)=>e.readonly = data instanceof HTMLElement
+});
+/*#__PURE__*/ _jsx("input", {
+    ref: (e)=>e.setAttribute("readonly", data instanceof HTMLElement)
+});

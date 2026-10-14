@@ -64,3 +64,19 @@
 <div>{[...items]}</div>;
 <div>{...items}</div>;
 <div>{...items}{...items}</div>;
+
+<button disabled={!isEnabled} />;
+<button prop:disabled={!isEnabled} />;
+<button attr:disabled={!isEnabled} />;
+
+<button disabled={data.isEnabled ?? !isEnabled} />;
+<button prop:disabled={data.isEnabled ?? !isEnabled} />;
+<button attr:disabled={data.isEnabled ?? !isEnabled} />;
+
+<input readonly={'readonly' in data} />;
+<input prop:readonly={'readonly' in data} />;
+<input attr:readonly={'readonly' in data} />;
+
+<input readonly={data instanceof HTMLElement} />;
+<input prop:readonly={data instanceof HTMLElement} />;
+<input attr:readonly={data instanceof HTMLElement} />;
