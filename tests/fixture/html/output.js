@@ -281,3 +281,27 @@ App({
 /*#__PURE__*/ _jsx("input", {
     ref: (e)=>e.setAttribute("readonly", data instanceof HTMLElement)
 });
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.tabIndex = ++i
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.setAttribute("tabindex", ++i)
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.tabIndex = i++
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.setAttribute("tabindex", i++)
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.tabIndex = --i
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.setAttribute("tabindex", --i)
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.tabIndex = i--
+});
+/*#__PURE__*/ _jsx("span", {
+    ref: (e)=>e.setAttribute("tabindex", i--)
+});

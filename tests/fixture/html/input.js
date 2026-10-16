@@ -80,3 +80,12 @@
 <input readonly={data instanceof HTMLElement} />;
 <input prop:readonly={data instanceof HTMLElement} />;
 <input attr:readonly={data instanceof HTMLElement} />;
+
+<span prop:tabIndex={++i} />;
+<span attr:tabindex={++i} />;
+<span prop:tabIndex={i++} />;
+<span attr:tabindex={i++} />;
+<span prop:tabIndex={--i} />;
+<span attr:tabindex={--i} />;
+<span prop:tabIndex={i--} />;
+<span attr:tabindex={i--} />;

@@ -38,7 +38,10 @@ fn is_primitive_value(expr: &Expr) -> bool {
         );
     }
 
-    expr.is_lit() || expr.is_tpl() || expr.is_unary()
+    matches!(
+        expr,
+        Expr::Lit(_) | Expr::Tpl(_) | Expr::Unary(_) | Expr::Update(_)
+    )
 }
 
 pub fn is_non_lit_style(attr: &JSXAttr) -> bool {
