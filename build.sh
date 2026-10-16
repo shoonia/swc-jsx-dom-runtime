@@ -8,7 +8,7 @@ wasm_file="$target_dir/swc_jsx_dom_runtime.wasm"
 optimized_file="$wasm_file.tmp"
 output_file="$project_dir/index.wasm"
 
-trap 'rm -f "$optimized_file"' EXIT HUP INT TERM
+trap 'rm -f "$optimized_file" "$output_file"' EXIT HUP INT TERM
 
 cargo build \
     --manifest-path "$project_dir/Cargo.toml" \
